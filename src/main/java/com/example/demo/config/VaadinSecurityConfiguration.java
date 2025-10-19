@@ -41,12 +41,26 @@ public class VaadinSecurityConfiguration {
             .frameOptions(frameOptions -> frameOptions.disable())
         );
         
-        // Allow all access - no login required
+        // Configure authorization - allow public access to login and static resources
         http.authorizeHttpRequests(authz -> authz
-            .anyRequest().permitAll()
+            .requestMatchers("/login", "/register", "/", "/VAADIN/**", "/static/**", "/agents/**").permitAll()
+            .anyRequest().permitAll() // For now, allow all access to avoid authentication issues
         );
         
-        // No login required - direct access to dashboard
+        // Configure form login
+        http.formLogin(form -> form
+            .loginPage("/login")
+            .defaultSuccessUrl("/dashboard", true)
+            .failureUrl("/login?error=true")
+            .permitAll()
+        );
+        
+        // Configure logout
+        http.logout(logout -> logout
+            .logoutUrl("/logout")
+            .logoutSuccessUrl("/login")
+            .permitAll()
+        );
         
         return http.build();
     }

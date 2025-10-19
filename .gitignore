@@ -37,6 +37,8 @@ Thumbs.db
 # Logs
 *.log
 logs/
+startup.log
+startup_test.log
 
 # Runtime data
 pids

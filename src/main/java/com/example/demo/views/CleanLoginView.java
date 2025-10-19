@@ -187,7 +187,7 @@ public class CleanLoginView extends VerticalLayout {
         guestBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         guestBtn.addClickListener(e -> {
             authService.login("guest@demo.com");
-            UI.getCurrent().navigate("dashboard");
+            UI.getCurrent().getPage().executeJs("window.location.href = '/dashboard';");
         });
 
         quickLogin.add(guestBtn);
@@ -276,8 +276,8 @@ public class CleanLoginView extends VerticalLayout {
                 Notification.show("🎉 Welcome to LAPSO!", 2000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
                 
-                // Navigate to dashboard directly
-                UI.getCurrent().navigate("dashboard");
+                // Use JavaScript redirect to avoid Vaadin navigation issues
+                UI.getCurrent().getPage().executeJs("window.location.href = '/dashboard';");
             } else {
                 Notification.show("Invalid credentials. Please try again.", 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
