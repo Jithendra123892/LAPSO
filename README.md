@@ -1,488 +1,498 @@
-# 🆓 LAPSO - Free & Open Source Laptop Tracking
+# 🛡️ LAPSO - Free & Open Source Laptop Tracking System
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Java](https://img.shields.io/badge/Java-17+-blue.svg)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2+-green.svg)](https://spring.io/projects/spring-boot)
+[![Vaadin](https://img.shields.io/badge/Vaadin-24+-purple.svg)](https://vaadin.com/)
 
 ## ✨ **Simple, Honest, Completely Free - No False Claims**
 
-**LAPSO** is a free, open-source laptop tracking web application. It provides basic device tracking capabilities without any costs, subscriptions, or hidden fees. Built with honesty and transparency in mind.
+**LAPSO** is a free, open-source laptop tracking web application built with Spring Boot and Vaadin. It provides real device tracking capabilities without any costs, subscriptions, or hidden fees. Built with honesty and transparency in mind.
 
-### 🎯 **Honest Reality Check**
-- **What it is**: A simple Spring Boot web application for device tracking
-- **What it's not**: Military-grade, AI-powered, or enterprise-level security
-- **Accuracy**: Depends on device GPS (typically 10-100 meters, not 3 meters)
+### 🎯 **What LAPSO Actually Is**
+- **Reality**: A Spring Boot web application for basic device tracking
+- **Not**: Military-grade, AI-powered, or enterprise-level security system
+- **Accuracy**: Depends on device GPS and network (typically 10-100 meters)
 - **Comparison**: More features than Microsoft Find My Device, always free
-- **No false claims**: We don't exaggerate capabilities or use marketing hype
+- **Philosophy**: Honest capabilities, no marketing hype
 
 ---
 
-## 🎯 **What LAPSO Actually Provides (Real Features)**
+## 🚀 **Quick Start**
 
-### ✅ **GENUINE ADVANTAGES OVER MICROSOFT FIND MY DEVICE**
-
-- **Multi-Source Location**: GPS + WiFi + IP fusion for 3-10m accuracy (vs Microsoft's 10-100m)
-
----
-
-## 🔗 **Fully Integrated System Architecture**
-
-LAPSO is built with a comprehensive, interconnected architecture where all components work seamlessly together:
-
-### 🏗️ **Core Integration Layer**
-- **LapsoIntegrationService**: Central coordinator connecting all services
-- **Automatic Service Discovery**: All components auto-connect on startup
-- **Health Monitoring**: Real-time system health checks across all services
-- **Unified Error Handling**: Centralized error management and recovery
-
-### 📊 **Connected Services**
-
-#### 🔧 **Device Management**
-- **DeviceService**: Core device operations and lifecycle management
-- **DeviceRepository**: PostgreSQL-backed persistent storage
-- **Real-time Sync**: Automatic device state synchronization
-
-#### 📍 **Location Intelligence**
-- **EnhancedLocationService**: Multi-source location fusion
-- **GeofenceService**: Smart boundary monitoring with instant alerts
-- **LocationHistory**: Complete tracking timeline with analytics
-
-#### 🔄 **Real-Time Operations**
-- **RealTimeMonitoringService**: 30-second automatic updates
-- **WebSocketService**: Live dashboard updates without refresh
-- **Continuous monitoring**: 24/7 background operations
-
-#### 🔔 **Smart Notifications**
-- **NotificationService**: Multi-channel alert system
-- **Email Integration**: SMTP-based email notifications
-- **WebSocket Alerts**: Instant browser notifications
-- **Rate Limiting**: Intelligent spam prevention
-
-#### 📈 **Analytics & Intelligence**
-- **AnalyticsService**: Device usage and performance metrics
-- **System Health**: Comprehensive monitoring and diagnostics
-- **Performance Tracking**: Resource usage and optimization
-
-#### 🔐 **Security & Authentication**
-- **SimpleAuthService**: Session-based authentication
-- **Device Security**: Remote lock, wipe, and theft detection
-- **Access Control**: User-specific device access management
-
-### 🚀 **Startup Integration Process**
-
-When LAPSO starts, the integration service automatically:
-
-1. **Database Connection**: Verifies PostgreSQL connectivity
-2. **Service Registration**: Registers all services with health monitoring
-3. **Demo User Setup**: Creates demo account if needed
-4. **Background Services**: Starts monitoring, analytics, and notifications
-5. **WebSocket Initialization**: Enables real-time communication
-6. **Health Verification**: Confirms all systems are operational
-
-### 📡 **Real-Time Data Flow**
-
-```
-Device Agent → Location Update → DeviceService → Integration Service
-                                                        ↓
-WebSocket ← NotificationService ← GeofenceService ← LocationService
-    ↓                                                   ↓
-Dashboard ← AnalyticsService ← RealTimeMonitoring ← Database
-```
-
-### 🔍 **System Health Monitoring**
-
-- **Comprehensive Health Checks**: All services monitored continuously
-- **API Endpoints**: `/api/system/lapso-status` for complete system status
-- **Automatic Recovery**: Self-healing capabilities for service failures
-- **Performance Metrics**: Real-time system performance tracking
-
-### 🛠️ **Easy Management**
-
-- **Single Command Startup**: `start-lapso-complete.bat` starts everything
-- **Health Check Script**: `check-lapso-complete.bat` verifies all components
-- **Integrated Logging**: Centralized logging across all services
-- **Configuration Management**: Single configuration file for all services
-- **Automatic Updates**: Every 30 seconds automatically (vs Microsoft's manual refresh only)
-- **Device Control Commands**: Lock, unlock, sound alarm, screenshot (vs Microsoft's zero commands)
-- **Location History**: Complete movement tracking (vs Microsoft's no history)
-- **Cross-Platform Support**: Windows + macOS + Linux agents (vs Microsoft's Windows only)
-- **Self-Hosted Privacy**: Your data stays with you (vs Microsoft's servers)
-- **Always Free**: No subscription costs ever (vs Microsoft's potential fees)
-- **Real-Time Dashboard**: Live updates without page refresh
-- **Geofencing**: Set safe zones with entry/exit alerts
-- **System Monitoring**: Battery, network, and device status
-- **Open Source**: MIT license, modify as needed
-
-### 🚀 **FULLY OPERATIONAL SYSTEM**
-
-### **🆓 Completely Free**
-- **No costs** - Ever. No subscriptions, no hidden fees
-- **Open source** - All code available for inspection
-- **Self-hosted** - You control your own data
-- **No data collection** - Your privacy is protected
-
-### **🔧 Basic Features**
-- **Simple device tracking** - Basic location monitoring
-- **Clean web interface** - Easy to use dashboard
-- **Device management** - Add and manage your devices
-- **Basic alerts** - Simple notification system
-
-### **🎨 Clean Design**
-- **Modern interface** - Clean, simple design
-- **Easy to use** - No complex setup required
-- **Responsive** - Works on phones, tablets, computers
-- **Honest** - No false claims or marketing hype
-
----
-
-## 🎯 **QUICK START - DEPLOY IN 30 SECONDS**
-
-### **Option 1: Windows Service (Local 24/7)**
-```bash
-# Run as Administrator
-start-24x7.bat
-# Select Option 1: Windows Service
-```
-
-### **Option 2: Heroku Cloud (Internet 24/7)**
-```bash
-# Run the installer
-start-24x7.bat
-# Select Option 4: Heroku Cloud
-```
-
-### **Option 3: Docker (Cross-platform)**
-```bash
-# Install Docker Desktop first
-start-24x7.bat
-# Select Option 3: Docker
-```
-
----
-
-## 🌟 **KEY FEATURES**
-
-### 🔄 **True 24/7 Operation**
-- ✅ Continuous monitoring every minute
-- ✅ Automatic health checks every 5 minutes
-- ✅ Works even when terminal is closed
-- ✅ Survives system restarts
-- ✅ Auto-recovery from failures
-- ✅ Offline mode support
-
-### 🎨 **Extraordinary Visual Experience**
-- ✅ 80+ animated floating particles with connections
-- ✅ Advanced cursor trails and explosion effects
-- ✅ Holographic card overlays with scanning animation
-- ✅ Matrix rain background effect
-- ✅ Energy wave animations
-- ✅ Real-time performance dashboard
-- ✅ Sound visualization bars
-- ✅ Network connection visualization
-
-### 📊 **Professional Monitoring**
-- ✅ Real-time system metrics (CPU, memory, network)
-- ✅ Device health tracking and status updates
-- ✅ Performance analytics with live charts
-- ✅ WebSocket connection monitoring
-- ✅ Automatic data synchronization
-- ✅ Background task scheduling
-
-### 🛡️ **Enterprise Security**
-- ✅ Encrypted device communications
-- ✅ Google OAuth2 authentication
-- ✅ API security with CORS protection
-- ✅ Automatic security updates
-- ✅ Intrusion detection capabilities
-
-### 📱 **Device Management**
-- ✅ Real-time location tracking with Mappls integration
-- ✅ Remote device actions (lock, unlock, wipe, sound alarm)
-- ✅ Theft detection and automatic alerts
-- ✅ Battery and system monitoring
-- ✅ Network and connectivity status
-- ✅ Device sharing and collaboration
-
----
-
-## 🚀 **DEPLOYMENT OPTIONS**
-
-### 🏠 **Local 24/7 (Windows Service)**
-**Best for:** Home/office use, always-on PC
-- ✅ Free, full control
-- ✅ Works offline
-- ✅ True 24/7 operation
-- ✅ Automatic startup with Windows
-
-### ☁️ **Cloud 24/7 (Heroku)**
-**Best for:** Internet access from anywhere
-- ✅ Works even if laptop is off
-- ✅ Globally accessible
-- ✅ Automatic scaling
-- ✅ Professional hosting
-
-### 🐳 **Docker (Cross-platform)**
-**Best for:** Developers, multiple environments
-- ✅ Portable and consistent
-- ✅ Auto-restart capabilities
-- ✅ Easy scaling
-- ✅ Development friendly
-
----
-
-## 📊 **SYSTEM REQUIREMENTS**
-
-### **Minimum Requirements:**
+### **Prerequisites**
 - Java 17 or higher
-- 2GB RAM
-- 1GB disk space
-- Windows 10/11, macOS, or Linux
+- Maven 3.6+
+- PostgreSQL (optional, H2 included for development)
 
-### **Recommended for 24/7 Operation:**
-- Java 17
-- 4GB RAM
-- 2GB disk space
-- Stable internet connection
-- PostgreSQL database (for production)
+### **Run Locally**
+```bash
+# Clone the repository
+git clone https://github.com/Jithendra123892/LAPSO.git
+cd LAPSO
+
+# Run with Maven
+mvn spring-boot:run
+
+# Or use the provided script
+start-lapso-complete.bat
+```
+
+### **Access the Application**
+- **URL**: http://localhost:8080
+- **Demo Login**: demo@lapso.in / demo123
+- **Register**: Create your own account through the UI
 
 ---
 
-## 🔧 **CONFIGURATION**
+## 🌟 **Key Features**
 
-### **Database Setup**
+### ✅ **Device Management**
+- **Real-time tracking**: Live location updates every 30 seconds
+- **Device registration**: Easy setup with cross-platform agents
+- **Remote actions**: Lock, unlock, sound alarm, get location
+- **Device status**: Battery level, online/offline status, last seen
+- **Multi-device support**: Track multiple laptops, phones, tablets
+
+### ✅ **User Interface**
+- **Clean dashboard**: Modern, responsive design
+- **Live map view**: Interactive device location display
+- **Mobile-friendly**: Works on phones, tablets, and desktops
+- **Real-time updates**: WebSocket-powered live updates
+- **Agent downloads**: Easy installer downloads for all platforms
+
+### ✅ **Security & Privacy**
+- **Self-hosted**: Your data stays with you
+- **Open source**: MIT license, fully transparent
+- **Session-based auth**: Simple, secure authentication
+- **No tracking**: We don't collect your personal data
+- **Encrypted communication**: Secure device-server communication
+
+### ✅ **Cross-Platform Support**
+- **Windows**: PowerShell agent with installer
+- **macOS**: Shell script agent with installer  
+- **Linux**: Shell script agent with installer
+- **Universal**: Python agent for any platform
+
+---
+
+## 🏗️ **Architecture**
+
+### **Backend (Spring Boot)**
+- **Framework**: Spring Boot 3.2+ with Java 17
+- **Database**: H2 (development) / PostgreSQL (production)
+- **Security**: Spring Security with session management
+- **Real-time**: WebSocket support for live updates
+- **API**: RESTful endpoints for device management
+
+### **Frontend (Vaadin)**
+- **Framework**: Vaadin Flow 24+ (Java-based UI)
+- **Design**: Clean, modern interface with CSS3
+- **Responsive**: Mobile-first design approach
+- **Real-time**: Live dashboard updates without refresh
+- **PWA**: Progressive Web App capabilities
+
+### **Services Architecture**
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Device Agent  │───▶│  LAPSO Server   │───▶│    Database     │
+│  (Cross-platform)│    │ (Spring Boot)   │    │  (H2/PostgreSQL)│
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                              │
+                              ▼
+                       ┌─────────────────┐
+                       │  Web Dashboard  │
+                       │    (Vaadin)     │
+                       └─────────────────┘
+```
+
+---
+
+## 📱 **Device Agents**
+
+### **Windows Agent** (`lapso-installer.ps1`)
+```powershell
+# Download and run
+Invoke-WebRequest -Uri "http://localhost:8080/agents/windows/lapso-installer.ps1" -OutFile "lapso-installer.ps1"
+PowerShell -ExecutionPolicy Bypass -File "lapso-installer.ps1"
+```
+
+### **macOS/Linux Agent** (`lapso-installer.sh`)
+```bash
+# Download and run
+curl -O http://localhost:8080/agents/macos/lapso-installer.sh
+chmod +x lapso-installer.sh
+./lapso-installer.sh
+```
+
+### **Universal Python Agent** (`lapso-agent.py`)
+```bash
+# Download and run
+curl -O http://localhost:8080/agents/universal/lapso-agent.py
+python3 lapso-agent.py
+```
+
+---
+
+## 🔧 **Configuration**
+
+### **Database Configuration**
+
+#### **H2 (Default - Development)**
 ```properties
-# PostgreSQL (Recommended for production)
-spring.datasource.url=jdbc:postgresql://localhost:5432/devicetracker
+# Embedded H2 database (no setup required)
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driver-class-name=org.h2.Driver
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+```
+
+#### **PostgreSQL (Production)**
+```properties
+# PostgreSQL configuration
+spring.datasource.url=jdbc:postgresql://localhost:5432/lapso
 spring.datasource.username=postgres
 spring.datasource.password=your-password
-
-# H2 (Development only)
-spring.datasource.url=jdbc:h2:mem:testdb
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
 ```
 
-### **Google OAuth2 Setup**
+### **Application Properties**
 ```properties
-spring.security.oauth2.client.registration.google.client-id=your-client-id
-spring.security.oauth2.client.registration.google.client-secret=your-client-secret
-```
+# Server configuration
+server.port=8080
+server.servlet.context-path=/
 
-### **Mappls Maps Integration**
-```properties
-mappls.api.key=your-mappls-api-key
-```
+# Logging
+logging.level.com.example.demo=INFO
+logging.file.name=logs/lapso.log
 
----
-
-## 🌐 **ACCESS POINTS**
-
-Once deployed, access your 24/7 agent at:
-- **Local:** http://localhost:8080
-- **Heroku:** https://your-app-name.herokuapp.com
-- **Docker:** http://localhost:8080
-
-### **API Endpoints:**
-- **System Status:** `/api/system/status`
-- **Health Check:** `/api/system/health`
-- **Performance Metrics:** `/api/system/metrics`
-- **Device API:** `/api/devices`
-
----
-
-## 🛠️ **MANAGEMENT COMMANDS**
-
-### **Windows Service**
-```bash
-# Check status
-sc query DeviceTrackerAgent24x7
-
-# Start/Stop/Restart
-winsw.exe start service-config.xml
-winsw.exe stop service-config.xml
-winsw.exe restart service-config.xml
-```
-
-### **Docker**
-```bash
-# Check status
-docker ps
-
-# View logs
-docker logs device-tracker-24x7
-
-# Restart
-docker restart device-tracker-24x7
-```
-
-### **Heroku**
-```bash
-# Check status
-heroku ps --app your-app-name
-
-# View logs
-heroku logs --tail --app your-app-name
-
-# Restart
-heroku restart --app your-app-name
+# Vaadin
+vaadin.productionMode=false
 ```
 
 ---
 
-## 📱 **MOBILE INTEGRATION**
+## 🛠️ **Development**
 
-### **Android Agent**
-Download and install the Android agent for continuous device reporting:
-- Background service for 24/7 monitoring
-- Location tracking with GPS
-- Battery and system monitoring
-- Automatic theft detection
+### **Project Structure**
+```
+src/
+├── main/
+│   ├── java/com/example/demo/
+│   │   ├── controller/          # REST API controllers
+│   │   ├── model/              # JPA entities
+│   │   ├── repository/         # Data repositories
+│   │   ├── service/            # Business logic
+│   │   ├── views/              # Vaadin UI views
+│   │   ├── config/             # Configuration classes
+│   │   └── security/           # Security components
+│   └── resources/
+│       ├── static/             # Static web resources
+│       │   ├── agents/         # Device agent scripts
+│       │   ├── css/           # Stylesheets
+│       │   └── js/            # JavaScript files
+│       └── application.properties
+```
 
-### **iOS Agent**
-Install the iOS agent with background app refresh:
-- Background task scheduling
-- Location services integration
-- Device status reporting
-- Security monitoring
+### **Key Components**
+
+#### **Views (Vaadin UI)**
+- `CleanLoginView`: User authentication
+- `CleanDashboard`: Main dashboard with device overview
+- `CleanMapView`: Interactive map for device locations
+- `AgentDownloadView`: Agent download and setup
+- `CleanAnalyticsView`: Device analytics and reports
+
+#### **Services**
+- `SimpleAuthService`: User authentication and session management
+- `DeviceService`: Device CRUD operations and management
+- `AnalyticsService`: Device analytics and reporting
+- `EnhancedLocationService`: Location processing and geofencing
+- `WebSocketService`: Real-time communication
+
+#### **Controllers (REST API)**
+- `MainApiController`: Device management API
+- `LocationController`: Location tracking API
+- `AgentDataController`: Agent communication API
+- `SystemStatusController`: System health and status
 
 ---
 
-## 🔒 **SECURITY FEATURES**
+## 🔒 **Security Features**
 
 ### **Authentication**
-- Google OAuth2 integration
-- Session management
-- Secure cookie handling
-- Multi-factor authentication support
+- Session-based authentication (no JWT complexity)
+- Simple login/logout functionality
+- Demo account for testing (demo@lapso.in / demo123)
+- User registration through web interface
 
 ### **Data Protection**
-- Encrypted communications
-- Secure API endpoints
-- CORS protection
-- SQL injection prevention
+- All data stored locally (self-hosted)
+- No external data collection or tracking
+- Secure device-server communication
+- CSRF protection enabled
 
 ### **Device Security**
-- Remote lock/unlock
-- Data wipe capabilities
-- Theft detection
-- Intrusion alerts
+- Remote device locking capabilities
+- Device status monitoring
+- Secure agent-server communication
+- Device authentication tokens
 
 ---
 
-## 📈 **MONITORING & ANALYTICS**
+## 📊 **API Endpoints**
 
-### **Real-time Dashboard**
-- Live device status
-- Performance metrics
-- System health indicators
-- Network connectivity status
+### **Device Management**
+```
+GET    /api/devices              # List user devices
+POST   /api/devices              # Register new device
+PUT    /api/devices/{id}         # Update device
+DELETE /api/devices/{id}         # Remove device
+```
 
-### **Analytics**
-- Device usage patterns
-- Location history
-- Performance trends
-- Security events
+### **Location Tracking**
+```
+POST   /api/location/update      # Update device location
+GET    /api/location/{deviceId}  # Get device location
+GET    /api/location/history     # Location history
+```
 
-### **Alerts & Notifications**
-- Theft detection alerts
-- Low battery warnings
-- Connectivity issues
-- System health problems
+### **System Status**
+```
+GET    /api/system/status        # System health check
+GET    /api/system/metrics       # Performance metrics
+```
+
+### **Agent Downloads**
+```
+GET    /agents/windows/lapso-installer.ps1    # Windows agent
+GET    /agents/macos/lapso-installer.sh       # macOS agent
+GET    /agents/linux/lapso-installer.sh       # Linux agent
+GET    /agents/universal/lapso-agent.py       # Python agent
+```
 
 ---
 
-## 🚨 **TROUBLESHOOTING**
+## 🚀 **Deployment**
+
+### **Local Development**
+```bash
+# Clone and run
+git clone https://github.com/Jithendra123892/LAPSO.git
+cd LAPSO
+mvn spring-boot:run
+```
+
+### **Production Deployment**
+```bash
+# Build JAR
+mvn clean package
+
+# Run with production profile
+java -jar target/laptop-tracker-0.0.1-SNAPSHOT.jar --spring.profiles.active=production
+```
+
+### **Docker Deployment**
+```dockerfile
+FROM openjdk:17-jdk-slim
+COPY target/laptop-tracker-0.0.1-SNAPSHOT.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app.jar"]
+```
+
+---
+
+## 🔍 **Monitoring & Health Checks**
+
+### **Health Check Scripts**
+- `check-lapso-health.bat`: System health verification
+- `system-health-check.bat`: Comprehensive system check
+- `run-working-system.bat`: Start with health monitoring
+
+### **Built-in Monitoring**
+- Real-time device status dashboard
+- WebSocket connection monitoring
+- Database health checks
+- Service availability monitoring
+
+---
+
+## 🆓 **Advantages Over Commercial Solutions**
+
+### **vs Microsoft Find My Device**
+- ✅ **More features**: Remote actions, history, analytics
+- ✅ **Cross-platform**: Windows + macOS + Linux support
+- ✅ **Always free**: No subscription costs
+- ✅ **Privacy**: Self-hosted, your data stays with you
+- ✅ **Open source**: Transparent, modifiable code
+- ✅ **Real-time**: Live updates vs manual refresh
+
+### **vs Prey, LoJack, etc.**
+- ✅ **No monthly fees**: Completely free forever
+- ✅ **Self-hosted**: Full control over your data
+- ✅ **Open source**: No vendor lock-in
+- ✅ **Simple setup**: Easy installation and configuration
+- ✅ **Honest marketing**: No false claims or hype
+
+---
+
+## 🐛 **Troubleshooting**
 
 ### **Common Issues**
 
-**Service Won't Start:**
+#### **Application Won't Start**
 ```bash
-# Check logs
-type logs\device-tracker-service.log
-
-# Verify Java installation
+# Check Java version
 java -version
 
 # Check port availability
 netstat -an | findstr :8080
+
+# View logs
+tail -f logs/lapso.log
 ```
 
-**Docker Issues:**
+#### **Database Connection Issues**
 ```bash
-# Check Docker status
-docker --version
+# H2 Console (development)
+http://localhost:8080/h2-console
 
-# View container logs
-docker logs device-tracker-24x7
-
-# Rebuild image
-docker build -t device-tracker-24x7 .
+# PostgreSQL connection test
+psql -h localhost -U postgres -d lapso
 ```
 
-**Database Connection:**
+#### **Agent Connection Issues**
+- Verify server is running on port 8080
+- Check firewall settings
+- Ensure agent has network connectivity
+- Verify agent authentication token
+
+---
+
+## 📚 **Documentation**
+
+### **User Guides**
+- **Getting Started**: This README
+- **Agent Setup**: Available in `/agents/` directory
+- **API Documentation**: Built-in Swagger UI (development mode)
+
+### **Developer Guides**
+- **Code Structure**: See Project Structure section
+- **Contributing**: Fork, create feature branch, submit PR
+- **Building**: Standard Maven build process
+
+---
+
+## 🤝 **Contributing**
+
+We welcome contributions! Here's how to get started:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### **Development Guidelines**
+- Follow existing code style and conventions
+- Add tests for new functionality
+- Update documentation as needed
+- Keep commits focused and descriptive
+
+---
+
+## 📄 **License**
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### **MIT License Summary**
+- ✅ **Commercial use**: Use in commercial projects
+- ✅ **Modification**: Modify the code as needed
+- ✅ **Distribution**: Distribute copies freely
+- ✅ **Private use**: Use privately without restrictions
+- ❗ **Liability**: No warranty or liability
+- ❗ **Attribution**: Include original license
+
+---
+
+## 🌟 **Project Status**
+
+### **Current Version**: 1.0.0
+### **Status**: ✅ **Production Ready**
+
+#### **✅ Completed Features**
+- User authentication and registration
+- Device management and tracking
+- Real-time dashboard with live updates
+- Cross-platform agent support
+- Interactive map view
+- Agent download system
+- Mobile-responsive design
+- WebSocket real-time communication
+- Database integration (H2 + PostgreSQL)
+- Security implementation
+- API endpoints
+- Health monitoring
+
+#### **🔄 In Progress**
+- Enhanced analytics and reporting
+- Advanced geofencing features
+- Mobile app development
+- Performance optimizations
+
+#### **📋 Planned Features**
+- Email notifications
+- Advanced device actions
+- Multi-user support
+- Cloud deployment guides
+- Enhanced security features
+
+---
+
+## 📞 **Support & Contact**
+
+### **Getting Help**
+1. **Check Documentation**: Start with this README
+2. **Search Issues**: Look through existing GitHub issues
+3. **Create Issue**: Report bugs or request features
+4. **Community**: Join discussions in GitHub Discussions
+
+### **Project Information**
+- **Repository**: https://github.com/Jithendra123892/LAPSO
+- **Issues**: https://github.com/Jithendra123892/LAPSO/issues
+- **License**: MIT License
+- **Language**: Java (Spring Boot + Vaadin)
+
+---
+
+## 🎉 **Success Indicators**
+
+Your LAPSO installation is successful when you see:
+
+✅ **Application Status**: Running on http://localhost:8080  
+✅ **Login**: Demo account works (demo@lapso.in / demo123)  
+✅ **Dashboard**: Clean interface loads properly  
+✅ **Agent Downloads**: All platform agents available  
+✅ **Device Registration**: Can add and manage devices  
+✅ **Real-time Updates**: Live dashboard updates working  
+✅ **Map View**: Interactive map displays correctly  
+✅ **Database**: H2 or PostgreSQL connected successfully  
+
+---
+
+## 🚀 **Get Started Now!**
+
 ```bash
-# Test PostgreSQL connection
-psql -h localhost -U postgres -d devicetracker
+# Quick start in 3 commands
+git clone https://github.com/Jithendra123892/LAPSO.git
+cd LAPSO
+mvn spring-boot:run
 
-# Check database status
-systemctl status postgresql
+# Then visit: http://localhost:8080
+# Login with: demo@lapso.in / demo123
 ```
 
----
-
-## 📚 **DOCUMENTATION**
-
-- **Deployment Guide:** `DEPLOYMENT_GUIDE.md`
-- **Mappls Integration:** `MAPPLS_INTEGRATION.md`
-- **Agent Instructions:** `src/main/resources/static/HOW_TO_USE_AGENT.txt`
-- **Final Status:** `FINAL_STATUS_READY.md`
+**Your free, open-source laptop tracking system is ready!** 🛡️
 
 ---
 
-## 🎉 **SUCCESS INDICATORS**
-
-Your 24/7 deployment is successful when you see:
-
-✅ **Service Status:** OPERATIONAL  
-✅ **Uptime:** Continuous (days/hours)  
-✅ **Device Monitoring:** Active  
-✅ **Network Status:** CONNECTED  
-✅ **Health Checks:** PASSING  
-✅ **Auto-Recovery:** ENABLED  
-✅ **Visual Effects:** EXTRAORDINARY  
-✅ **Performance:** OPTIMAL  
-
----
-
-## 🆘 **SUPPORT**
-
-### **Quick Help**
-1. **Status Check:** Run `start-24x7.bat` → Option 6
-2. **View Logs:** Check `logs/` directory
-3. **Restart Service:** Use management commands
-4. **Performance Issues:** Monitor the real-time dashboard
-
-### **Advanced Support**
-- 📊 **Real-time Monitoring:** Built-in performance dashboard
-- 🔧 **Configuration:** Multiple deployment profiles
-- 🚨 **Alerts:** Automatic error detection and recovery
-- 📈 **Analytics:** Comprehensive system metrics
-
----
-
-## 🌟 **CONGRATULATIONS!**
-
-Your Device Tracker Pro 24/7 is now a **professional-grade monitoring system** providing:
-
-🔄 **Continuous Protection** - 24/7 device monitoring  
-🌐 **Global Access** - Manage devices from anywhere  
-🛡️ **Enterprise Security** - Professional-grade protection  
-📊 **Real-time Insights** - Live performance monitoring  
-🎨 **Extraordinary Experience** - Stunning visual effects  
-
-**Your devices are now protected around the clock!** 🚀
-
----
-
-## 📞 **CONTACT & LICENSE**
-
-- **Version:** 3.0.0
-- **Build Date:** 2024-12-19
-- **Mode:** 24/7 Continuous Operation
-- **License:** Enterprise Edition
-
-**Enjoy your 24/7 device protection system!** 🛡️
+*Built with ❤️ using Spring Boot, Vaadin, and open-source technologies*

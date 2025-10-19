@@ -12,7 +12,11 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 public class MainView extends VerticalLayout {
 
     public MainView() {
-        // Redirect to clean dashboard
-        UI.getCurrent().navigate("");
+        // Redirect to login page
+        UI.getCurrent().getPage().executeJs("window.location.href = '/login';");
+        
+        // Show loading message
+        add(new H1("LAPSO - Redirecting..."));
+        add(new Paragraph("Taking you to the login page..."));
     }
 }
