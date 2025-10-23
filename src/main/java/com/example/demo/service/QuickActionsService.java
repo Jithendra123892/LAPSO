@@ -45,8 +45,8 @@ public class QuickActionsService {
                     return result;
                 }
                 
-                // Lock the device
-                deviceService.lockDevice(deviceId);
+                // Lock the device (use overloaded method with userEmail to avoid security context issues)
+                deviceService.lockDevice(deviceId, userEmail);
                 
                 // Send command to agent (in real implementation, this would be queued)
                 sendDeviceCommand(deviceId, "LOCK", Map.of(
@@ -105,8 +105,8 @@ public class QuickActionsService {
                     return result;
                 }
                 
-                // Unlock the device
-                deviceService.unlockDevice(deviceId);
+                // Unlock the device (use overloaded method with userEmail)
+                deviceService.unlockDevice(deviceId, userEmail);
                 
                 // Send command to agent
                 sendDeviceCommand(deviceId, "UNLOCK", Map.of(
@@ -172,8 +172,8 @@ public class QuickActionsService {
                     return result;
                 }
                 
-                // Wipe the device
-                deviceService.wipeDevice(deviceId);
+                // Wipe the device (use overloaded method with userEmail)
+                deviceService.wipeDevice(deviceId, userEmail);
                 
                 // Send command to agent
                 sendDeviceCommand(deviceId, "WIPE", Map.of(

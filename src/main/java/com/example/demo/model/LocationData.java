@@ -11,6 +11,18 @@ public class LocationData {
     private String address;
     private LocalDateTime timestamp;
     
+    // Advanced location data fields
+    private Double confidence;
+    private Integer satelliteCount;
+    private Integer signalStrength;
+    private Integer accessPointCount;
+    private Integer beaconCount;
+    private Integer cellTowerCount;
+    private Double speed;
+    private String transportationMode;
+    private Boolean isIndoor;
+    private Double altitude;
+    
     // Constructors
     public LocationData() {}
     
@@ -22,6 +34,8 @@ public class LocationData {
         this.source = source;
         this.address = address;
         this.timestamp = timestamp;
+        this.confidence = 0.8; // Default confidence
+        this.isIndoor = false; // Default outdoor
     }
     
     // Builder pattern for easy construction
@@ -37,6 +51,9 @@ public class LocationData {
         private String source;
         private String address;
         private LocalDateTime timestamp;
+        private Double confidence;
+        private Integer satelliteCount;
+        private Integer signalStrength;
         
         public LocationDataBuilder deviceId(String deviceId) {
             this.deviceId = deviceId;
@@ -73,8 +90,27 @@ public class LocationData {
             return this;
         }
         
+        public LocationDataBuilder confidence(Double confidence) {
+            this.confidence = confidence;
+            return this;
+        }
+        
+        public LocationDataBuilder satelliteCount(Integer satelliteCount) {
+            this.satelliteCount = satelliteCount;
+            return this;
+        }
+        
+        public LocationDataBuilder signalStrength(Integer signalStrength) {
+            this.signalStrength = signalStrength;
+            return this;
+        }
+        
         public LocationData build() {
-            return new LocationData(deviceId, latitude, longitude, accuracy, source, address, timestamp);
+            LocationData data = new LocationData(deviceId, latitude, longitude, accuracy, source, address, timestamp);
+            data.setConfidence(confidence);
+            data.setSatelliteCount(satelliteCount);
+            data.setSignalStrength(signalStrength);
+            return data;
         }
     }
     
@@ -99,4 +135,35 @@ public class LocationData {
     
     public LocalDateTime getTimestamp() { return timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    
+    // Advanced getters and setters
+    public Double getConfidence() { return confidence; }
+    public void setConfidence(Double confidence) { this.confidence = confidence; }
+    
+    public Integer getSatelliteCount() { return satelliteCount; }
+    public void setSatelliteCount(Integer satelliteCount) { this.satelliteCount = satelliteCount; }
+    
+    public Integer getSignalStrength() { return signalStrength; }
+    public void setSignalStrength(Integer signalStrength) { this.signalStrength = signalStrength; }
+    
+    public Integer getAccessPointCount() { return accessPointCount; }
+    public void setAccessPointCount(Integer accessPointCount) { this.accessPointCount = accessPointCount; }
+    
+    public Integer getBeaconCount() { return beaconCount; }
+    public void setBeaconCount(Integer beaconCount) { this.beaconCount = beaconCount; }
+    
+    public Integer getCellTowerCount() { return cellTowerCount; }
+    public void setCellTowerCount(Integer cellTowerCount) { this.cellTowerCount = cellTowerCount; }
+    
+    public Double getSpeed() { return speed; }
+    public void setSpeed(Double speed) { this.speed = speed; }
+    
+    public String getTransportationMode() { return transportationMode; }
+    public void setTransportationMode(String transportationMode) { this.transportationMode = transportationMode; }
+    
+    public Boolean getIsIndoor() { return isIndoor; }
+    public void setIsIndoor(Boolean isIndoor) { this.isIndoor = isIndoor; }
+    
+    public Double getAltitude() { return altitude; }
+    public void setAltitude(Double altitude) { this.altitude = altitude; }
 }

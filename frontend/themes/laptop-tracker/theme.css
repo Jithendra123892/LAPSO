@@ -66,6 +66,19 @@ body {
   background-color: var(--lumo-contrast-5pct);
 }
 
+/* Ensure Vaadin dialogs always overlay third-party map canvases/layers */
+vaadin-dialog-overlay,
+vaadin-dialog-overlay::part(overlay),
+vaadin-dialog-overlay::part(backdrop) {
+  z-index: 2147483647 !important; /* max possible to beat aggressive map overlays */
+}
+
+/* Defensive: if any map container uses absurd z-index, keep it below dialogs */
+#deviceMap,
+#deviceMap * {
+  z-index: auto !important;
+}
+
 /* Card-like styling for common layouts */
 .card {
   background-color: var(--lumo-base-color);

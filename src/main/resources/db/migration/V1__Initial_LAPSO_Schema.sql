@@ -216,10 +216,7 @@ CREATE TRIGGER update_laptops_updated_at BEFORE UPDATE ON laptops FOR EACH ROW E
 CREATE TRIGGER update_geofences_updated_at BEFORE UPDATE ON geofences FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_system_settings_updated_at BEFORE UPDATE ON system_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Insert demo user for testing
-INSERT INTO users (email, password, name, created_at) VALUES
-('demo@lapso.in', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Demo User', CURRENT_TIMESTAMP)
-ON CONFLICT (email) DO NOTHING;
+-- Database schema initialized - ready for production use
 
 -- Create views for better data access
 CREATE OR REPLACE VIEW device_summary AS

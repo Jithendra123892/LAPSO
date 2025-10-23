@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.service.SimpleAuthService;
+import com.example.demo.service.PerfectAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SecurityAuditController {
 
     @Autowired
-    private SimpleAuthService authService;
+    private PerfectAuthService authService;
     
     // Security audit log (in production, use proper logging system)
     private static final Map<String, List<SecurityEvent>> securityLog = new ConcurrentHashMap<>();
@@ -26,11 +26,11 @@ public class SecurityAuditController {
     public ResponseEntity<Map<String, Object>> getSecurityAudit() {
         
         // SECURITY CHECK: Only authenticated users can view audit logs
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return ResponseEntity.status(401).build();
         }
         
-        String currentUser = authService.getCurrentUser();
+        String currentUser = authService.getLoggedInUser();
         
         // In a real system, you'd check for admin role here
         // For now, users can only see their own security events
@@ -83,11 +83,11 @@ public class SecurityAuditController {
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> getSecurityStatus() {
         
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return ResponseEntity.status(401).build();
         }
         
-        String currentUser = authService.getCurrentUser();
+        String currentUser = authService.getLoggedInUser();
         
         Map<String, Object> status = new HashMap<>();
         status.put("timestamp", LocalDateTime.now());

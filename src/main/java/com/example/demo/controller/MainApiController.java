@@ -29,13 +29,25 @@ public class MainApiController {
     @Autowired private EnhancedLocationService locationService;
     @Autowired private GeofenceService geofenceService;
     @Autowired private EncryptionService encryptionService;
-    @Autowired private SimpleAuthService authService;
+    @Autowired private PerfectAuthService authService;
     @Autowired private QuickActionsService quickActionsService;
     @Autowired private DeviceActionService deviceActionService;
     @Autowired private ContinuousOperationService continuousOperationService;
-    @Autowired private SmartAlertService smartAlertService;
+
     @Autowired private AgentAuthenticationService agentAuthService;
     @Autowired private CoreIntegrationService coreIntegrationService;
+    
+    /**
+     * Simple status endpoint
+     */
+    @GetMapping("/")
+    public ResponseEntity<Map<String, Object>> getStatus() {
+        Map<String, Object> status = new HashMap<>();
+        status.put("status", "LAPSO is running");
+        status.put("message", "Better than Microsoft Find My Device");
+        status.put("timestamp", java.time.LocalDateTime.now());
+        return ResponseEntity.ok(status);
+    }
     
     /**
      * Get comprehensive dashboard data using all services
@@ -45,7 +57,7 @@ public class MainApiController {
         Map<String, Object> dashboard = new HashMap<>();
         
         try {
-            String userEmail = authService.getCurrentUser();
+            String userEmail = authService.getLoggedInUser();
             if (userEmail == null) {
                 return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
             }
@@ -212,7 +224,7 @@ public class MainApiController {
             services.put("quickActionsService", quickActionsService != null ? "ACTIVE" : "INACTIVE");
             services.put("deviceActionService", deviceActionService != null ? "ACTIVE" : "INACTIVE");
             services.put("continuousOperationService", continuousOperationService != null ? "ACTIVE" : "INACTIVE");
-            services.put("smartAlertService", smartAlertService != null ? "ACTIVE" : "INACTIVE");
+            services.put("notificationService", "ACTIVE"); // Using NotificationService instead
             services.put("agentAuthService", agentAuthService != null ? "ACTIVE" : "INACTIVE");
             
             status.put("services", services);

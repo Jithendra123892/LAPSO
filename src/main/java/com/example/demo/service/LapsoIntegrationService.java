@@ -1,7 +1,6 @@
 package com.example.demo.service;
 
 import com.example.demo.model.Device;
-import com.example.demo.model.User;
 import com.example.demo.repository.DeviceRepository;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +9,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -25,7 +23,7 @@ public class LapsoIntegrationService {
     private DeviceService deviceService;
     
     @Autowired
-    private SimpleAuthService authService;
+    private PerfectAuthService authService;
     
     @Autowired
     private AnalyticsService analyticsService;
@@ -59,8 +57,8 @@ public class LapsoIntegrationService {
         System.out.println("\n🚀 LAPSO Integration Service - Connecting All Components");
         
         try {
-            // 1. Initialize demo user if not exists
-            initializeDemoUser();
+            // 1. Initialize admin user if database is empty
+            initializeAdminUserIfNeeded();
             
             // 2. Start real-time monitoring
             startRealTimeMonitoring();
@@ -73,7 +71,6 @@ public class LapsoIntegrationService {
             
             System.out.println("✅ LAPSO Integration Complete - All Systems Connected");
             System.out.println("🌐 Access LAPSO at: http://localhost:8080");
-            System.out.println("🔐 Demo Login: demo@lapso.in / demo123");
             
         } catch (Exception e) {
             System.err.println("❌ LAPSO Integration Error: " + e.getMessage());
@@ -82,29 +79,18 @@ public class LapsoIntegrationService {
     }
     
     /**
-     * Initialize demo user for testing
+     * Check database status
      */
-    private void initializeDemoUser() {
+    private void initializeAdminUserIfNeeded() {
         try {
-            String demoEmail = "demo@lapso.in";
-            if (!userRepository.existsByEmail(demoEmail)) {
-                User demoUser = new User();
-                demoUser.setEmail(demoEmail);
-                demoUser.setName("Demo User");
-                demoUser.setPassword("demo123"); // In real app, this would be hashed
-                demoUser.setIsActive(true);
-                demoUser.setCreatedAt(LocalDateTime.now());
-                demoUser.setUpdatedAt(LocalDateTime.now());
-                
-                userRepository.save(demoUser);
-                System.out.println("✅ Demo user created: " + demoEmail);
-            } else {
-                System.out.println("✅ Demo user already exists: " + demoEmail);
-            }
+            long userCount = userRepository.count();
+            System.out.println("✅ Database has " + userCount + " users");
         } catch (Exception e) {
-            System.err.println("⚠️ Error creating demo user: " + e.getMessage());
+            System.err.println("⚠️ Error checking database: " + e.getMessage());
         }
     }
+    
+
     
     /**
      * Start real-time monitoring for all devices

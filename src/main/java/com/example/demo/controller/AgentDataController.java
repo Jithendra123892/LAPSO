@@ -2,8 +2,10 @@ package com.example.demo.controller;
 
 import com.example.demo.model.Device;
 import com.example.demo.model.User;
+import com.example.demo.model.LocationHistory;
 import com.example.demo.service.DeviceService;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.LocationHistoryRepository;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -125,18 +127,95 @@ public class AgentDataController {
             device.setCpuUsage(request.getCpuUsage());
             device.setMemoryUsage(request.getMemoryUsage());
             device.setDiskUsage(request.getDiskUsage());
+            try { device.setAgentVersion(request.getAgentVersion()); } catch (Exception ignored) {}
+
+            // Track agent installation status
+            if (device.getAgentInstalled() == null || !device.getAgentInstalled()) {
+                device.setAgentInstalled(true);
+                device.setAgentInstalledAt(LocalDateTime.now());
+                System.out.println("🎉 Agent installed for device: " + device.getDeviceId());
+            }
+            device.setAgentLastHeartbeat(LocalDateTime.now());
             
             // Update location if provided
-            if (request.getLatitude() != null && request.getLongitude() != null) {
-                device.setLatitude(request.getLatitude());
-                device.setLongitude(request.getLongitude());
-                device.setAddress(request.getAddress());
+                // Update location if provided with sanity checks
+                if (request.getLatitude() != null && request.getLongitude() != null) {
+                    boolean acceptLocation = true;
+                    Double prevLat = device.getLatitude();
+                    Double prevLng = device.getLongitude();
+
+                    if (prevLat != null && prevLng != null) {
+                        double distanceKm = haversineKm(prevLat, prevLng, request.getLatitude(), request.getLongitude());
+                        Double acc = request.getAccuracy();
+                        // Reject big jumps (>30km) unless accuracy is reasonable (<= 2km)
+                        if (distanceKm > 30 && (acc == null || acc > 2000)) {
+                            acceptLocation = false;
+                            System.err.println("⚠️ Ignoring suspicious location jump for device " + device.getDeviceId() +
+                                    ": " + String.format("%.1f km", distanceKm) + 
+                                    " (accuracy=" + (acc != null ? acc + "m" : "unknown") + ")");
+                        }
+                    }
+
+                    if (acceptLocation) {
+                        device.setLatitude(request.getLatitude());
+                        device.setLongitude(request.getLongitude());
+                        device.setAddress(request.getAddress());
+                        System.out.println("📍 LOCATION UPDATE: Device " + device.getDeviceId() + 
+                            " - Lat: " + request.getLatitude() + ", Lng: " + request.getLongitude() + 
+                            " (Source: " + request.getLocationSource() + ", Accuracy: " + request.getAccuracy() + "m)");
+                        // Optionally store accuracy/source if your Device model supports it
+                        try { device.setAccuracy(request.getAccuracy()); } catch (Exception ignored) {}
+                        try { 
+                            String source = request.getLocationSource();
+                            device.setLocationSource(source != null ? source : "AGENT");  // Default to AGENT
+                        } catch (Exception ignored) {
+                            device.setLocationSource("AGENT");  // Fallback to AGENT
+                        }
+                    }
             }
             
             // Save device with user isolation
             System.out.println("💾 Saving device with ID: " + device.getDeviceId() + " for user: " + user.getEmail());
+            
+            // Check for low battery alert (before saving to compare previous state)
+            Integer oldBattery = device.getBatteryLevel();
+            Integer newBattery = request.getBatteryLevel();
+            Boolean wasCharging = device.getIsCharging();
+            Boolean isCharging = request.getIsCharging();
+            
             device = deviceService.saveDevice(device);
             System.out.println("💾 Device saved successfully. DB ID: " + device.getId() + " | User: " + user.getEmail());
+            
+            // Send battery low alert if battery drops below 20% and not charging
+            if (newBattery != null && newBattery < 20 && !Boolean.TRUE.equals(isCharging)) {
+                if (oldBattery == null || oldBattery >= 20) {
+                    // Battery just dropped below 20%
+                    messagingTemplate.convertAndSend("/topic/alerts/" + user.getEmail(), Map.of(
+                        "type", "BATTERY_LOW",
+                        "severity", "warning",
+                        "deviceId", device.getDeviceId(),
+                        "deviceName", device.getDeviceName(),
+                        "batteryLevel", newBattery,
+                        "message", "⚠️ " + device.getDeviceName() + " battery is low (" + newBattery + "%)",
+                        "timestamp", LocalDateTime.now()
+                    ));
+                    System.out.println("🔋 LOW BATTERY ALERT sent for " + device.getDeviceName() + ": " + newBattery + "%");
+                }
+            }
+            
+            // Send unplugged alert if device was charging and now isn't
+            if (Boolean.TRUE.equals(wasCharging) && !Boolean.TRUE.equals(isCharging) && newBattery != null && newBattery < 100) {
+                messagingTemplate.convertAndSend("/topic/alerts/" + user.getEmail(), Map.of(
+                    "type", "DEVICE_UNPLUGGED",
+                    "severity", "info",
+                    "deviceId", device.getDeviceId(),
+                    "deviceName", device.getDeviceName(),
+                    "batteryLevel", newBattery,
+                    "message", "🔌 " + device.getDeviceName() + " was unplugged (" + newBattery + "% remaining)",
+                    "timestamp", LocalDateTime.now()
+                ));
+                System.out.println("🔌 UNPLUGGED ALERT sent for " + device.getDeviceName());
+            }
             
             // Send real-time update to all connected clients via WebSocket
             messagingTemplate.convertAndSend("/topic/device-updates", new DeviceUpdateMessage(
@@ -165,6 +244,70 @@ public class AgentDataController {
             return ResponseEntity.badRequest().body(Map.of(
                 "status", "error",
                 "message", "Failed to process agent data: " + e.getMessage()
+            ));
+        }
+    }
+
+    // Agent uninstall notification endpoint
+    @PostMapping("/uninstall")
+    @Transactional
+    public ResponseEntity<?> agentUninstalled(@Valid @RequestBody AgentUninstallRequest request) {
+        try {
+            System.out.println("🗑️ Received agent uninstall notification from device: " + request.getDeviceId());
+            
+            // Find user by email
+            User user = userRepository.findByEmail(request.getUserEmail()).orElse(null);
+            if (user == null) {
+                System.err.println("❌ User not found: " + request.getUserEmail());
+                return ResponseEntity.status(404).body(Map.of(
+                    "status", "error",
+                    "message", "User not found"
+                ));
+            }
+            
+            // Find device and verify ownership
+            Device device = deviceService.findByDeviceId(request.getDeviceId()).orElse(null);
+            if (device == null || !device.getUser().getId().equals(user.getId())) {
+                System.err.println("❌ Device not found or unauthorized: " + request.getDeviceId());
+                return ResponseEntity.status(403).body(Map.of(
+                    "status", "error",
+                    "message", "Device not found or unauthorized"
+                ));
+            }
+            
+            // Update agent status
+            device.setAgentInstalled(false);
+            device.setAgentUninstalledAt(LocalDateTime.now());
+            device.setIsOnline(false);
+            device.setOfflineReason("Agent uninstalled");
+            
+            deviceService.saveDevice(device);
+            
+            // Send real-time update to dashboard via WebSocket
+            messagingTemplate.convertAndSend("/topic/device-updates", new DeviceUpdateMessage(
+                device.getId(),
+                device.getDeviceId(),
+                device.getDeviceName(),
+                false, // isOnline
+                device.getBatteryLevel(),
+                device.getCpuUsage(),
+                device.getMemoryUsage(),
+                device.getLastSeen()
+            ));
+            
+            System.out.println("✅ Agent uninstall recorded for device: " + device.getDeviceId());
+            
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Agent uninstall recorded successfully"
+            ));
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error recording agent uninstall: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of(
+                "status", "error",
+                "message", "Failed to record agent uninstall: " + e.getMessage()
             ));
         }
     }
@@ -521,8 +664,8 @@ public class AgentDataController {
         @Email(message = "Valid email address is required")
         private String userEmail;  // User email to associate device with
         
-        @Min(value = 0, message = "Battery level must be between 0 and 100")
-        @Max(value = 100, message = "Battery level must be between 0 and 100")
+        @Min(value = -1, message = "Battery level must be between -1 and 100 (-1 = no battery)")
+        @Max(value = 100, message = "Battery level must be between -1 and 100 (-1 = no battery)")
         private Integer batteryLevel;
         
         private String manufacturer;
@@ -544,14 +687,17 @@ public class AgentDataController {
         private Double latitude;
         private Double longitude;
         private String address;
+    private Double accuracy; // meters (optional)
+    private String locationSource; // e.g., Windows_Location_API or IP_Geolocation
         
         // New enhanced fields
-        private String networkType;
+    private String networkType;
         private String wifiSSID;
         private Integer signalStrength;
         private Boolean isCharging;
         private String securityStatus;
         private Map<String, Object> systemInfo;
+    private String agentVersion;
         
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime timestamp;
@@ -596,6 +742,12 @@ public class AgentDataController {
         public String getAddress() { return address; }
         public void setAddress(String address) { this.address = address; }
 
+    public Double getAccuracy() { return accuracy; }
+    public void setAccuracy(Double accuracy) { this.accuracy = accuracy; }
+
+    public String getLocationSource() { return locationSource; }
+    public void setLocationSource(String locationSource) { this.locationSource = locationSource; }
+
         public LocalDateTime getTimestamp() { return timestamp; }
         public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
 
@@ -617,11 +769,26 @@ public class AgentDataController {
 
         public Map<String, Object> getSystemInfo() { return systemInfo; }
         public void setSystemInfo(Map<String, Object> systemInfo) { this.systemInfo = systemInfo; }
+
+        public String getAgentVersion() { return agentVersion; }
+        public void setAgentVersion(String agentVersion) { this.agentVersion = agentVersion; }
     }
     
     // Helper method to get base URL
     private String getBaseUrl() {
         return "http://localhost:8086"; // In production, this should be configurable
+    }
+
+    // Haversine distance in kilometers
+    private double haversineKm(double lat1, double lon1, double lat2, double lon2) {
+        final double R = 6371.0; // km
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     // WebSocket message model
@@ -671,5 +838,27 @@ public class AgentDataController {
 
         public LocalDateTime getLastSeen() { return lastSeen; }
         public void setLastSeen(LocalDateTime lastSeen) { this.lastSeen = lastSeen; }
+    }
+
+    // Agent Uninstall Request DTO
+    public static class AgentUninstallRequest {
+        @NotBlank(message = "Device ID is required")
+        private String deviceId;
+        
+        @NotBlank(message = "User email is required")
+        @Email(message = "Invalid email format")
+        private String userEmail;
+        
+        private String reason;
+
+        // Getters and setters
+        public String getDeviceId() { return deviceId; }
+        public void setDeviceId(String deviceId) { this.deviceId = deviceId; }
+
+        public String getUserEmail() { return userEmail; }
+        public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
+
+        public String getReason() { return reason; }
+        public void setReason(String reason) { this.reason = reason; }
     }
 }

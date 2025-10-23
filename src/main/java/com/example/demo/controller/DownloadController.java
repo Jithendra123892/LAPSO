@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.service.SimpleAuthService;
+import com.example.demo.service.PerfectAuthService;
 import com.example.demo.service.DeviceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -21,7 +21,7 @@ import java.nio.file.Paths;
 public class DownloadController {
 
     @Autowired
-    private SimpleAuthService authService;
+    private PerfectAuthService authService;
     
     @Autowired
     private DeviceService deviceService;
@@ -36,12 +36,12 @@ public class DownloadController {
             @RequestParam(defaultValue = "http://localhost:8080") String serverUrl) {
         
         // SECURITY CHECK: Verify user authentication
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return ResponseEntity.status(401).build();
         }
         
         // SECURITY CHECK: Verify user can only download their own device installers
-        String currentUser = authService.getCurrentUser();
+        String currentUser = authService.getLoggedInUser();
         if (!currentUser.equals(userEmail)) {
             return ResponseEntity.status(403).build(); // Forbidden - user trying to access another user's device
         }
@@ -76,12 +76,12 @@ public class DownloadController {
             @RequestParam(defaultValue = "http://localhost:8080") String serverUrl) {
         
         // SECURITY CHECK: Verify user authentication
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return ResponseEntity.status(401).build();
         }
         
         // SECURITY CHECK: Verify user can only download their own device installers
-        String currentUser = authService.getCurrentUser();
+        String currentUser = authService.getLoggedInUser();
         if (!currentUser.equals(userEmail)) {
             return ResponseEntity.status(403).build(); // Forbidden - user trying to access another user's device
         }
@@ -116,12 +116,12 @@ public class DownloadController {
             @RequestParam(defaultValue = "http://localhost:8080") String serverUrl) {
         
         // SECURITY CHECK: Verify user authentication
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return ResponseEntity.status(401).build();
         }
         
         // SECURITY CHECK: Verify user can only download their own device installers
-        String currentUser = authService.getCurrentUser();
+        String currentUser = authService.getLoggedInUser();
         if (!currentUser.equals(userEmail)) {
             return ResponseEntity.status(403).build(); // Forbidden - user trying to access another user's device
         }

@@ -21,7 +21,7 @@ class LapsoAgent:
     def __init__(self, server_url="http://localhost:8080", device_id=None, user_email=None):
         self.server_url = server_url.rstrip('/')
         self.device_id = device_id or self.generate_device_id()
-        self.user_email = user_email or "demo@lapso.in"
+        self.user_email = user_email
         self.running = True
         self.update_interval = 30  # seconds
         
@@ -502,7 +502,7 @@ def main():
     parser = argparse.ArgumentParser(description='LAPSO Universal Agent')
     parser.add_argument('--server', default='http://localhost:8080', help='LAPSO server URL')
     parser.add_argument('--device-id', help='Device ID (auto-generated if not provided)')
-    parser.add_argument('--user-email', default='demo@lapso.in', help='User email')
+    parser.add_argument('--user-email', required=True, help='User email (required)')
     parser.add_argument('--interval', type=int, default=30, help='Update interval in seconds')
     
     args = parser.parse_args()

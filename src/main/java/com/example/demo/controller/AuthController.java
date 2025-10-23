@@ -26,13 +26,7 @@ public class AuthController {
     // Removed root mapping to avoid conflicts with Vaadin routing
     // Vaadin will handle all routing including the root path
     
-    @GetMapping("/login")
-    public String loginPage(Model model, @RequestParam(value = "error", required = false) String error) {
-        if (error != null) {
-            model.addAttribute("error", "Invalid username or password");
-        }
-        return "login"; // Serve the HTML login template
-    }
+    // Removed conflicting login mapping - Vaadin PerfectLoginView handles /login
     
     // Removed manual login handler - now using Spring Security authentication
     

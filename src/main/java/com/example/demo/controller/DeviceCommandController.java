@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.service.SimpleAuthService;
+import com.example.demo.service.PerfectAuthService;
 import com.example.demo.service.DeviceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DeviceCommandController {
 
     @Autowired
-    private SimpleAuthService authService;
+    private PerfectAuthService authService;
     
     @Autowired
     private DeviceService deviceService;
@@ -34,9 +34,14 @@ public class DeviceCommandController {
         Map<String, Object> response = new HashMap<>();
         
         try {
+            System.out.println("🔍 POLL REQUEST: Device=" + deviceId + ", User=" + userEmail);
+            System.out.println("🔍 Total devices in queue: " + pendingCommands.size());
+            System.out.println("🔍 Queue keys: " + pendingCommands.keySet());
+            
             // Verify device exists and user owns it
             var deviceOpt = deviceService.findByDeviceId(deviceId);
             if (deviceOpt.isEmpty()) {
+                System.out.println("❌ POLL ERROR: Device not found: " + deviceId);
                 response.put("success", false);
                 response.put("error", "Device not found");
                 return ResponseEntity.status(404).body(response);
@@ -44,6 +49,7 @@ public class DeviceCommandController {
             
             var device = deviceOpt.get();
             if (!device.getUserEmail().equals(userEmail)) {
+                System.out.println("❌ POLL ERROR: Access denied for " + userEmail + " on device " + deviceId);
                 response.put("success", false);
                 response.put("error", "Access denied");
                 return ResponseEntity.status(403).body(response);
@@ -51,11 +57,15 @@ public class DeviceCommandController {
             
             // Get pending commands
             Queue<DeviceCommand> commands = pendingCommands.getOrDefault(deviceId, new LinkedList<>());
+            System.out.println("🔍 Commands in queue for " + deviceId + ": " + commands.size());
+            
             List<DeviceCommand> commandList = new ArrayList<>();
             
             // Return up to 5 commands at once
             for (int i = 0; i < 5 && !commands.isEmpty(); i++) {
-                commandList.add(commands.poll());
+                DeviceCommand cmd = commands.poll();
+                commandList.add(cmd);
+                System.out.println("📤 Dequeued command: " + cmd.getAction() + " (ID: " + cmd.getCommandId() + ")");
             }
             
             response.put("success", true);
@@ -64,7 +74,9 @@ public class DeviceCommandController {
             response.put("timestamp", LocalDateTime.now());
             
             if (!commandList.isEmpty()) {
-                System.out.println("📤 Sent " + commandList.size() + " commands to device: " + deviceId);
+                System.out.println("✅ Sent " + commandList.size() + " commands to device: " + deviceId);
+            } else {
+                System.out.println("ℹ️ No pending commands for device: " + deviceId);
             }
             
             return ResponseEntity.ok(response);
@@ -122,7 +134,12 @@ public class DeviceCommandController {
         
         pendingCommands.computeIfAbsent(deviceId, k -> new LinkedList<>()).offer(command);
         
-        System.out.println("📋 Queued command for device " + deviceId + ": " + action);
+        System.out.println("📋 QUEUED COMMAND:");
+        System.out.println("   Device ID: " + deviceId);
+        System.out.println("   Action: " + action);
+        System.out.println("   Command ID: " + command.getCommandId());
+        System.out.println("   Queue size for device: " + pendingCommands.get(deviceId).size());
+        System.out.println("   Total devices with commands: " + pendingCommands.size());
     }
     
     /**
@@ -131,7 +148,7 @@ public class DeviceCommandController {
     @GetMapping("/count/{deviceId}")
     public ResponseEntity<Map<String, Object>> getPendingCommandCount(@PathVariable String deviceId) {
         
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return ResponseEntity.status(401).body(Map.of("error", "Authentication required"));
         }
         

@@ -1,7 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.service.QuickActionsService;
-import com.example.demo.service.SimpleAuthService;
+import com.example.demo.service.PerfectAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,7 @@ public class QuickActionsController {
     private QuickActionsService quickActionsService;
     
     @Autowired
-    private SimpleAuthService authService;
+    private PerfectAuthService authService;
 
     /**
      * Lock device remotely
@@ -26,13 +26,13 @@ public class QuickActionsController {
     @PostMapping("/lock/{deviceId}")
     public CompletableFuture<ResponseEntity<Map<String, Object>>> lockDevice(@PathVariable String deviceId) {
         
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return CompletableFuture.completedFuture(
                 ResponseEntity.status(401).body(Map.of("success", false, "error", "Authentication required"))
             );
         }
         
-        String userEmail = authService.getCurrentUser();
+        String userEmail = authService.getLoggedInUser();
         
         return quickActionsService.lockDevice(deviceId, userEmail)
             .thenApply(result -> {
@@ -50,13 +50,13 @@ public class QuickActionsController {
     @PostMapping("/unlock/{deviceId}")
     public CompletableFuture<ResponseEntity<Map<String, Object>>> unlockDevice(@PathVariable String deviceId) {
         
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return CompletableFuture.completedFuture(
                 ResponseEntity.status(401).body(Map.of("success", false, "error", "Authentication required"))
             );
         }
         
-        String userEmail = authService.getCurrentUser();
+        String userEmail = authService.getLoggedInUser();
         
         return quickActionsService.unlockDevice(deviceId, userEmail)
             .thenApply(result -> {
@@ -76,13 +76,13 @@ public class QuickActionsController {
             @PathVariable String deviceId,
             @RequestBody Map<String, String> request) {
         
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return CompletableFuture.completedFuture(
                 ResponseEntity.status(401).body(Map.of("success", false, "error", "Authentication required"))
             );
         }
         
-        String userEmail = authService.getCurrentUser();
+        String userEmail = authService.getLoggedInUser();
         String confirmationCode = request.get("confirmationCode");
         
         return quickActionsService.wipeDevice(deviceId, userEmail, confirmationCode)
@@ -101,13 +101,13 @@ public class QuickActionsController {
     @PostMapping("/play-sound/{deviceId}")
     public CompletableFuture<ResponseEntity<Map<String, Object>>> playSound(@PathVariable String deviceId) {
         
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return CompletableFuture.completedFuture(
                 ResponseEntity.status(401).body(Map.of("success", false, "error", "Authentication required"))
             );
         }
         
-        String userEmail = authService.getCurrentUser();
+        String userEmail = authService.getLoggedInUser();
         
         return quickActionsService.playSoundOnDevice(deviceId, userEmail)
             .thenApply(result -> {
@@ -125,13 +125,13 @@ public class QuickActionsController {
     @PostMapping("/screenshot/{deviceId}")
     public CompletableFuture<ResponseEntity<Map<String, Object>>> takeScreenshot(@PathVariable String deviceId) {
         
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return CompletableFuture.completedFuture(
                 ResponseEntity.status(401).body(Map.of("success", false, "error", "Authentication required"))
             );
         }
         
-        String userEmail = authService.getCurrentUser();
+        String userEmail = authService.getLoggedInUser();
         
         return quickActionsService.takeScreenshot(deviceId, userEmail)
             .thenApply(result -> {
@@ -149,13 +149,13 @@ public class QuickActionsController {
     @GetMapping("/location/{deviceId}")
     public CompletableFuture<ResponseEntity<Map<String, Object>>> getCurrentLocation(@PathVariable String deviceId) {
         
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return CompletableFuture.completedFuture(
                 ResponseEntity.status(401).body(Map.of("success", false, "error", "Authentication required"))
             );
         }
         
-        String userEmail = authService.getCurrentUser();
+        String userEmail = authService.getLoggedInUser();
         
         return quickActionsService.getCurrentLocation(deviceId, userEmail)
             .thenApply(result -> {
@@ -173,7 +173,7 @@ public class QuickActionsController {
     @GetMapping("/available/{deviceId}")
     public ResponseEntity<Map<String, Object>> getAvailableActions(@PathVariable String deviceId) {
         
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return ResponseEntity.status(401).body(Map.of("success", false, "error", "Authentication required"));
         }
         
@@ -255,13 +255,13 @@ public class QuickActionsController {
             @PathVariable String deviceId,
             @RequestBody Map<String, Object> request) {
         
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             return CompletableFuture.completedFuture(
                 ResponseEntity.status(401).body(Map.of("success", false, "error", "Authentication required"))
             );
         }
         
-        String userEmail = authService.getCurrentUser();
+        String userEmail = authService.getLoggedInUser();
         
         return CompletableFuture.supplyAsync(() -> {
             Map<String, Object> result = new HashMap<>();

@@ -37,16 +37,27 @@ if [[ $EUID -eq 0 ]]; then
     exit 1
 fi
 
-# Check for required parameters
-if [[ $# -lt 2 ]]; then
-    print_error "Usage: $0 <DeviceId> <UserEmail> [ServerUrl]"
-    print_info "Example: $0 LAPSO-ABC123 user@example.com http://localhost:8080"
-    exit 1
+# Auto-detect device ID and prompt for email if not provided
+# Device ID: try system UUID or hostname
+DEVICE_ID=$(sudo dmidecode -s system-uuid 2>/dev/null | tr '[:lower:]' '[:upper:]')
+if [[ -z "$DEVICE_ID" || "$DEVICE_ID" == "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF" ]]; then
+    DEVICE_ID=$(hostname)
 fi
 
-DEVICE_ID="$1"
-USER_EMAIL="$2"
-SERVER_URL="${3:-http://localhost:8080}"
+# Server URL (default to local)
+SERVER_URL="${SERVER_URL:-http://localhost:8080}"
+
+# User email: accept as $1 for non-interactive; otherwise prompt
+if [[ -n "$1" ]]; then
+    USER_EMAIL="$1"
+fi
+if [[ -z "$USER_EMAIL" ]]; then
+    read -r -p "Enter your LAPSO account email: " USER_EMAIL
+fi
+if [[ -z "$USER_EMAIL" ]]; then
+    print_error "User email is required"
+    exit 1
+fi
 
 echo -e "${GREEN}🛡️ LAPSO Agent Installer${NC}"
 echo -e "${GREEN}=========================${NC}"
@@ -80,7 +91,7 @@ print_status "Created LAPSO directory: $LAPSO_DIR"
 # Download agent script
 print_info "Downloading LAPSO agent..."
 AGENT_SCRIPT="$LAPSO_DIR/lapso-agent.sh"
-AGENT_URL="$SERVER_URL/agents/linux/laptop-tracker-agent.sh"
+AGENT_URL="$SERVER_URL/api/agents/download/linux/laptop-tracker-agent.sh"
 
 if curl -f -s -o "$AGENT_SCRIPT" "$AGENT_URL"; then
     sudo chmod +x "$AGENT_SCRIPT"
@@ -228,6 +239,22 @@ UNINSTALLER="$LAPSO_DIR/uninstall.sh"
 sudo tee "$UNINSTALLER" > /dev/null <<EOF
 #!/bin/bash
 echo "🗑️ Uninstalling LAPSO Agent..."
+
+# Read config to notify server
+CONFIG_FILE="/opt/lapso/config.json"
+if [ -f "\$CONFIG_FILE" ]; then
+    DEVICE_ID=\$(grep -o '"deviceId": *"[^"]*"' "\$CONFIG_FILE" | sed 's/"deviceId": *"\([^"]*\)"/\1/')
+    USER_EMAIL=\$(grep -o '"userEmail": *"[^"]*"' "\$CONFIG_FILE" | sed 's/"userEmail": *"\([^"]*\)"/\1/')
+    SERVER_URL=\$(grep -o '"serverUrl": *"[^"]*"' "\$CONFIG_FILE" | sed 's/"serverUrl": *"\([^"]*\)"/\1/')
+    
+    if [ -n "\$DEVICE_ID" ] && [ -n "\$USER_EMAIL" ] && [ -n "\$SERVER_URL" ]; then
+        curl -X POST "\$SERVER_URL/api/agent/uninstall" \\
+            -H "Content-Type: application/json" \\
+            -d "{\"deviceId\":\"\$DEVICE_ID\",\"userEmail\":\"\$USER_EMAIL\",\"reason\":\"User uninstalled\"}" \\
+            --silent --show-error || echo "⚠️ Could not notify server (continuing with uninstall)"
+        echo "✅ Notified server of uninstall"
+    fi
+fi
 
 # Stop service
 if command -v systemctl &> /dev/null; then

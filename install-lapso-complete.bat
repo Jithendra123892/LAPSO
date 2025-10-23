@@ -72,7 +72,7 @@ if errorlevel 1 (
 echo.
 echo 📋 Step 4: Starting LAPSO...
 echo 🌐 LAPSO will be available at: http://localhost:8080
-echo 🔐 Demo login: demo@lapso.in / demo123
+echo 🔐 Create your account at first login
 echo.
 echo 🎉 Installation complete! Starting LAPSO...
 echo.
@@ -227,7 +227,7 @@ echo   ⚙️ Fully customizable
 echo.
 echo 📞 Support:
 echo   🌐 Access: http://localhost:8080
-echo   🔐 Login: demo@lapso.in / demo123
+echo   🔐 Create your account at first login
 echo   📖 Docs: README.md, SIMPLE_INSTALL.md
 echo   🆘 Issues: Check logs in console
 echo.

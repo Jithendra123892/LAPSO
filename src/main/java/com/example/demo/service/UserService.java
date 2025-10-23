@@ -314,7 +314,9 @@ public class UserService {
             User user = new User();
             user.setEmail(email.toLowerCase().trim());
             user.setName(name != null ? name.trim() : "User");
-            user.setPasswordHash(passwordEncoder.encode(password));
+            String hashedPassword = passwordEncoder.encode(password);
+            user.setPassword(hashedPassword);  // Set both password fields
+            user.setPasswordHash(hashedPassword);
             user.setProvider("manual");
             user.setIsActive(true);
             user.setIsEmailVerified(false);

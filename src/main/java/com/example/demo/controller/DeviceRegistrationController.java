@@ -3,7 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.model.Device;
 import com.example.demo.model.User;
 import com.example.demo.service.DeviceService;
-import com.example.demo.service.SimpleAuthService;
+import com.example.demo.service.PerfectAuthService;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +23,7 @@ public class DeviceRegistrationController {
     private DeviceService deviceService;
     
     @Autowired
-    private SimpleAuthService authService;
+    private PerfectAuthService authService;
     
     @Autowired
     private UserRepository userRepository;
@@ -37,14 +37,14 @@ public class DeviceRegistrationController {
         
         try {
             // SECURITY CHECK: Verify user authentication
-            if (!authService.isAuthenticated()) {
+            if (!authService.isLoggedIn()) {
                 response.put("success", false);
                 response.put("error", "Authentication required to register devices");
                 System.err.println("🚨 SECURITY: Unauthorized device registration attempt");
                 return ResponseEntity.status(401).body(response);
             }
             
-            String userEmail = authService.getCurrentUser();
+            String userEmail = authService.getLoggedInUser();
             Optional<User> userOpt = userRepository.findByEmail(userEmail);
             
             if (userOpt.isEmpty()) {
@@ -196,13 +196,13 @@ public class DeviceRegistrationController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            if (!authService.isAuthenticated()) {
+            if (!authService.isLoggedIn()) {
                 response.put("success", false);
                 response.put("error", "User not authenticated");
                 return ResponseEntity.status(401).body(response);
             }
             
-            String userEmail = authService.getCurrentUser();
+            String userEmail = authService.getLoggedInUser();
             var devices = deviceService.getUserDevices(userEmail);
             
             response.put("success", true);

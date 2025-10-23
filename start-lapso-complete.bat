@@ -40,7 +40,7 @@ echo 🚀 Starting LAPSO Application...
 echo.
 
 REM Start the Spring Boot application with all features enabled
-java -jar target/laptop-tracker-0.0.1-SNAPSHOT.jar ^
+java -jar target/laptop-tracker-3.2.8.jar ^
     --spring.profiles.active=postgresql ^
     --server.port=8080 ^
     --spring.datasource.url=jdbc:postgresql://localhost:5432/postgres ^
@@ -55,7 +55,7 @@ echo.
 echo 🎯 LAPSO Startup Complete!
 echo.
 echo 📱 Access your dashboard at: http://localhost:8080
-echo 🔐 Demo Login: demo@lapso.in / demo123
+echo 🔐 Create your account at first login
 echo 📖 Documentation: README.md
 echo 🆘 Support: Check LAPSO_HONEST_REALITY.md
 echo.

@@ -1,6 +1,6 @@
 package com.example.demo.views;
 
-import com.example.demo.service.SimpleAuthService;
+import com.example.demo.service.PerfectAuthService;
 import com.example.demo.service.DeviceService;
 import com.example.demo.service.AnalyticsService;
 import com.example.demo.service.EnhancedLocationService;
@@ -17,6 +17,7 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.dependency.JavaScript;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
@@ -33,7 +34,7 @@ import java.util.Map;
 public class CleanDashboard extends VerticalLayout {
 
     @Autowired
-    private SimpleAuthService authService;
+    private PerfectAuthService authService;
     
     @Autowired
     private DeviceService deviceService;
@@ -47,7 +48,7 @@ public class CleanDashboard extends VerticalLayout {
     @Autowired
     private GeofenceService geofenceService;
 
-    public CleanDashboard(SimpleAuthService authService, DeviceService deviceService, AnalyticsService analyticsService, EnhancedLocationService enhancedLocationService, GeofenceService geofenceService) {
+    public CleanDashboard(PerfectAuthService authService, DeviceService deviceService, AnalyticsService analyticsService, EnhancedLocationService enhancedLocationService, GeofenceService geofenceService) {
         this.authService = authService;
         this.deviceService = deviceService;
         this.analyticsService = analyticsService;
@@ -60,6 +61,19 @@ public class CleanDashboard extends VerticalLayout {
             return;
         }
         
+        // Add user email to page for WebSocket subscription
+        String userEmail = authService.getLoggedInUser();
+        if (userEmail != null) {
+            UI.getCurrent().getPage().executeJs(
+                "window.currentUserEmail = $0;", userEmail
+            );
+            
+            // Load battery alert system from static resources
+            UI.getCurrent().getPage().addJavaScript("https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js");
+            UI.getCurrent().getPage().addJavaScript("https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js");
+            UI.getCurrent().getPage().addJavaScript("./js/battery-alerts.js");
+        }
+        
         createCleanDashboard();
     }
 
@@ -68,11 +82,11 @@ public class CleanDashboard extends VerticalLayout {
         setPadding(false);
         setSpacing(false);
         
-        // Friendly, welcoming background
+        // Clean, professional background (removed purple gradient)
         getStyle()
-            .set("background", "linear-gradient(135deg, #667eea 0%, #764ba2 100%)")
+            .set("background", "#f5f5f5")
             .set("font-family", "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif")
-            .set("color", "#ffffff");
+            .set("color", "#333333");
 
         // User-friendly header
         add(createWelcomeHeader());
@@ -103,48 +117,56 @@ public class CleanDashboard extends VerticalLayout {
     }
 
     private Component createWelcomeHeader() {
-        VerticalLayout header = new VerticalLayout();
-        header.setWidthFull();
-        header.setPadding(true);
-        header.setSpacing(false);
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
-        header.getStyle()
-            .set("text-align", "center")
-            .set("padding", "2rem 1rem");
+        // Main header container
+        HorizontalLayout headerContainer = new HorizontalLayout();
+        headerContainer.setWidthFull();
+        headerContainer.setPadding(true);
+        headerContainer.setAlignItems(FlexComponent.Alignment.CENTER);
+        headerContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        headerContainer.getStyle()
+            .set("background", "#ffffff")
+            .set("box-shadow", "0 2px 8px rgba(0,0,0,0.1)")
+            .set("padding", "1rem 2rem");
 
-        // Friendly greeting
+        // Left side: Logo and greeting
+        VerticalLayout leftSection = new VerticalLayout();
+        leftSection.setSpacing(false);
+        leftSection.setPadding(false);
+        
         String currentUser = authService.getCurrentUser();
         String displayName = currentUser != null && currentUser.contains("@") ? 
-            currentUser.split("@")[0] : "Friend";
+            currentUser.split("@")[0] : "User";
         
-        H1 greeting = new H1("Hi " + displayName + "! 👋");
+        H1 greeting = new H1("Hello, " + displayName);
         greeting.getStyle()
-            .set("color", "#ffffff")
-            .set("font-size", "2.5rem")
-            .set("font-weight", "300")
-            .set("margin", "0 0 0.5rem 0")
-            .set("text-shadow", "0 2px 4px rgba(0,0,0,0.3)");
+            .set("color", "#333333")
+            .set("font-size", "28px")
+            .set("font-weight", "600")
+            .set("margin", "0 0 4px 0");
         
-        Paragraph subtitle = new Paragraph("Your laptops are safe and sound 😊");
+        Paragraph subtitle = new Paragraph("Manage your devices");
         subtitle.getStyle()
-            .set("color", "rgba(255, 255, 255, 0.9)")
-            .set("font-size", "1.2rem")
-            .set("margin", "0 0 1rem 0")
+            .set("color", "#666666")
+            .set("font-size", "14px")
+            .set("margin", "0")
             .set("font-weight", "400");
         
-        // Simple status indicator
-        Div statusIndicator = new Div();
-        statusIndicator.add(new Span("🟢 Everything looks good"));
-        statusIndicator.getStyle()
-            .set("background", "rgba(255, 255, 255, 0.2)")
-            .set("color", "#ffffff")
-            .set("padding", "0.5rem 1rem")
-            .set("border-radius", "25px")
-            .set("font-weight", "500")
-            .set("backdrop-filter", "blur(10px)");
+        leftSection.add(greeting, subtitle);
         
-        header.add(greeting, subtitle, statusIndicator);
-        return header;
+        // Right side: Logout button
+        Button logoutButton = new Button("Logout", VaadinIcon.SIGN_OUT.create());
+        logoutButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        logoutButton.addClickListener(e -> {
+            authService.logoutUser();
+            UI.getCurrent().navigate("login");
+            Notification.show("Logged out successfully", 3000, Notification.Position.BOTTOM_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        });
+        logoutButton.getStyle()
+            .set("cursor", "pointer");
+        
+        headerContainer.add(leftSection, logoutButton);
+        return headerContainer;
     }
 
     private Component createUserFriendlyStatus() {
@@ -170,9 +192,9 @@ public class CleanDashboard extends VerticalLayout {
         Map<String, Object> analytics = analyticsService.getDashboardAnalytics(userEmail != null ? userEmail : "");
 
         statusCards.add(
-            createFriendlyStatusCard("💻", "Your Laptops", analytics.get("totalDevices").toString(), "#10b981", "Being watched 24/7"),
-            createFriendlyStatusCard("🛡️", "Protection Level", "Maximum", "#3b82f6", "Always monitoring"),
-            createFriendlyStatusCard("💰", "Cost to You", "$0", "#8b5cf6", "Free forever")
+            createFriendlyStatusCard("Devices", analytics.get("totalDevices").toString(), "#10b981"),
+            createFriendlyStatusCard("Online", analytics.get("onlineDevices").toString(), "#3b82f6"),
+            createFriendlyStatusCard("Protected", analytics.get("totalDevices").toString(), "#059669")
         );
 
         statusSection.add(sectionTitle, statusCards);
@@ -184,14 +206,12 @@ public class CleanDashboard extends VerticalLayout {
         section.setPadding(false);
         section.setSpacing(true);
 
-        // Simple, friendly header
-        H2 sectionTitle = new H2("Your Laptops 💻");
+        H2 sectionTitle = new H2("Devices");
         sectionTitle.getStyle()
-            .set("color", "#1f2937")
-            .set("font-size", "1.5rem")
+            .set("color", "#111827")
+            .set("font-size", "20px")
             .set("font-weight", "600")
-            .set("margin", "0 0 1rem 0")
-            .set("text-align", "center");
+            .set("margin", "0 0 16px 0");
 
         // Devices list
         List<Device> devices = deviceService.getCurrentUserDevices();
@@ -218,27 +238,21 @@ public class CleanDashboard extends VerticalLayout {
         section.setPadding(false);
         section.setSpacing(true);
 
-        H2 sectionTitle = new H2("What would you like to do? 🤔");
+        H2 sectionTitle = new H2("Quick Actions");
         sectionTitle.getStyle()
-            .set("color", "#1f2937")
-            .set("font-size", "1.5rem")
+            .set("color", "#111827")
+            .set("font-size", "20px")
             .set("font-weight", "600")
-            .set("margin", "0 0 1rem 0")
-            .set("text-align", "center");
+            .set("margin", "0 0 16px 0");
 
         HorizontalLayout actionsGrid = new HorizontalLayout();
         actionsGrid.setWidthFull();
         actionsGrid.setSpacing(true);
-        actionsGrid.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        actionsGrid.setJustifyContentMode(FlexComponent.JustifyContentMode.START);
 
         actionsGrid.add(
-            createUserActionCard("📍", "Find My Laptop", "Show me where it is right now", () -> UI.getCurrent().navigate("map")),
-            createUserActionCard("🔒", "Lock My Laptop", "Lock it if I think it's stolen", () -> {
-                Notification.show("🔒 Your laptop will be locked remotely. Choose your device from the list above!", 
-                    5000, Notification.Position.TOP_CENTER)
-                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-            }),
-            createUserActionCard("📱", "Protect Another Device", "Add my phone, tablet, or another laptop", () -> UI.getCurrent().navigate("download-agent"))
+            createUserActionCard("Locate Devices", "View all devices on map", () -> UI.getCurrent().navigate("map")),
+            createUserActionCard("Add Device", "Protect another device", () -> UI.getCurrent().navigate("download-agent"))
         );
 
         section.add(sectionTitle, actionsGrid);
@@ -246,48 +260,36 @@ public class CleanDashboard extends VerticalLayout {
     }
 
     // Helper methods
-    private Component createFriendlyStatusCard(String icon, String title, String value, String color, String description) {
+    private Component createFriendlyStatusCard(String title, String value, String color) {
         VerticalLayout card = new VerticalLayout();
         card.setPadding(true);
         card.setSpacing(false);
         card.setAlignItems(FlexComponent.Alignment.CENTER);
         card.getStyle()
             .set("background", "#ffffff")
-            .set("border-radius", "15px")
-            .set("box-shadow", "0 4px 15px rgba(0, 0, 0, 0.1)")
-            .set("border", "2px solid " + color)
+            .set("border-radius", "12px")
+            .set("box-shadow", "0 1px 3px rgba(0, 0, 0, 0.1)")
+            .set("border", "1px solid #e5e7eb")
             .set("flex", "1")
-            .set("min-width", "200px")
+            .set("min-width", "120px")
             .set("text-align", "center")
-            .set("transition", "all 0.3s ease")
-            .set("cursor", "default");
-
-        Span iconSpan = new Span(icon);
-        iconSpan.getStyle()
-            .set("font-size", "2.5rem")
-            .set("margin-bottom", "0.5rem");
+            .set("padding", "20px");
 
         H3 valueH3 = new H3(value);
         valueH3.getStyle()
-            .set("color", color)
-            .set("font-size", "2rem")
+            .set("color", "#111827")
+            .set("font-size", "28px")
             .set("font-weight", "700")
-            .set("margin", "0 0 0.25rem 0");
+            .set("margin", "0 0 4px 0");
 
-        H4 titleH4 = new H4(title);
-        titleH4.getStyle()
-            .set("color", "#1f2937")
-            .set("font-size", "1rem")
-            .set("font-weight", "600")
-            .set("margin", "0 0 0.5rem 0");
-
-        Paragraph desc = new Paragraph(description);
-        desc.getStyle()
+        Paragraph titleP = new Paragraph(title);
+        titleP.getStyle()
             .set("color", "#6b7280")
-            .set("font-size", "0.875rem")
+            .set("font-size", "13px")
+            .set("font-weight", "500")
             .set("margin", "0");
 
-        card.add(iconSpan, valueH3, titleH4, desc);
+        card.add(valueH3, titleP);
         return card;
     }
     
@@ -342,140 +344,197 @@ public class CleanDashboard extends VerticalLayout {
         card.setAlignItems(FlexComponent.Alignment.CENTER);
         card.getStyle()
             .set("background", "#ffffff")
-            .set("border-radius", "15px")
+            .set("border-radius", "12px")
             .set("border", "1px solid #e5e7eb")
-            .set("box-shadow", "0 2px 10px rgba(0, 0, 0, 0.1)")
-            .set("transition", "all 0.3s ease")
-            .set("margin-bottom", "1rem");
+            .set("box-shadow", "0 1px 3px rgba(0, 0, 0, 0.1)")
+            .set("transition", "all 0.2s ease")
+            .set("margin-bottom", "12px")
+            .set("cursor", "pointer");
+        
+        card.addClickListener(e -> UI.getCurrent().navigate("map"));
 
-        // Device info with friendly language
+        // Device image (like Microsoft Find My Device)
+        Div deviceImageContainer = new Div();
+        deviceImageContainer.getStyle()
+            .set("width", "120px")
+            .set("height", "80px")
+            .set("background", "#f3f4f6")
+            .set("border-radius", "8px")
+            .set("display", "flex")
+            .set("align-items", "center")
+            .set("justify-content", "center")
+            .set("flex-shrink", "0")
+            .set("margin-right", "16px")
+            .set("position", "relative")
+            .set("overflow", "hidden");
+        
+        // Laptop SVG illustration
+        Div laptopIcon = new Div();
+        laptopIcon.getElement().setProperty("innerHTML", 
+            "<svg width='64' height='48' viewBox='0 0 64 48' fill='none'>" +
+            "<rect x='8' y='4' width='48' height='32' rx='2' fill='#9ca3af' stroke='#6b7280' stroke-width='2'/>" +
+            "<rect x='10' y='6' width='44' height='28' fill='#374151'/>" +
+            "<path d='M2 36h60l-4 8H6l-4-8z' fill='#6b7280'/>" +
+            "<circle cx='32' cy='40' r='1.5' fill='#4b5563'/>" +
+            "</svg>");
+        deviceImageContainer.add(laptopIcon);
+
+        // Device info
         VerticalLayout deviceInfo = new VerticalLayout();
         deviceInfo.setPadding(false);
         deviceInfo.setSpacing(false);
         deviceInfo.getStyle().set("flex", "1");
 
-        String deviceName = device.getDeviceName() != null ? device.getDeviceName() : "Your Laptop";
-        H3 nameH3 = new H3("💻 " + deviceName);
+        String deviceName = device.getDeviceName() != null ? device.getDeviceName() : "Windows PC";
+        H3 nameH3 = new H3(deviceName);
         nameH3.getStyle()
-            .set("color", "#1f2937")
-            .set("font-size", "1.2rem")
+            .set("color", "#111827")
+            .set("font-size", "16px")
             .set("font-weight", "600")
-            .set("margin", "0 0 0.5rem 0");
+            .set("margin", "0 0 4px 0");
 
-        // Friendly status message
+        // Status
         String statusMessage = "";
-        String statusColor = "#10b981";
+        String statusColor = "#059669";
         boolean isOnline = device.getIsOnline() != null ? device.getIsOnline() : false;
         
         if (isOnline) {
-            if (device.getAddress() != null && device.getAddress().toLowerCase().contains("home")) {
-                statusMessage = "😊 Safe at home";
-            } else if (device.getAddress() != null) {
-                statusMessage = "📍 At " + device.getAddress();
+            if (device.getAddress() != null) {
+                statusMessage = device.getAddress();
             } else {
-                statusMessage = "✅ Online and protected";
+                statusMessage = "Online";
             }
         } else {
-            statusMessage = "😴 Sleeping (offline)";
-            statusColor = "#f59e0b";
+            statusMessage = "Offline";
+            statusColor = "#6b7280";
         }
 
         Paragraph statusP = new Paragraph(statusMessage);
         statusP.getStyle()
             .set("color", statusColor)
-            .set("font-size", "1rem")
-            .set("margin", "0 0 0.5rem 0")
+            .set("font-size", "14px")
+            .set("margin", "0 0 4px 0")
             .set("font-weight", "500");
 
-        // Last seen info
-        String lastSeenText = "Last seen: " + getTimeAgo(device.getLastSeen());
+        // Last seen
+        String lastSeenText = getTimeAgo(device.getLastSeen());
         Paragraph lastSeenP = new Paragraph(lastSeenText);
         lastSeenP.getStyle()
             .set("color", "#6b7280")
-            .set("font-size", "0.875rem")
+            .set("font-size", "13px")
             .set("margin", "0");
 
-        deviceInfo.add(nameH3, statusP, lastSeenP);
+        // Battery display
+        HorizontalLayout batteryInfo = new HorizontalLayout();
+        batteryInfo.setSpacing(true);
+        batteryInfo.setAlignItems(FlexComponent.Alignment.CENTER);
+        batteryInfo.getStyle().set("margin-top", "8px");
+        
+        if (device.getBatteryLevel() != null) {
+            String batteryIcon;
+            String batteryColor;
+            Integer batteryLevel = device.getBatteryLevel();
+            
+            if (batteryLevel >= 80) {
+                batteryIcon = "🔋";
+                batteryColor = "#059669";
+            } else if (batteryLevel >= 50) {
+                batteryIcon = "🔋";
+                batteryColor = "#3b82f6";
+            } else if (batteryLevel >= 20) {
+                batteryIcon = "🔋";
+                batteryColor = "#f59e0b";
+            } else {
+                batteryIcon = "🪫";
+                batteryColor = "#ef4444";
+            }
+            
+            Span batteryBadge = new Span(batteryIcon + " " + batteryLevel + "%");
+            batteryBadge.getStyle()
+                .set("color", batteryColor)
+                .set("font-size", "13px")
+                .set("font-weight", "600")
+                .set("padding", "4px 8px")
+                .set("background", batteryColor + "20")
+                .set("border-radius", "6px");
+            
+            if (device.getIsCharging() != null && device.getIsCharging()) {
+                Span chargingBadge = new Span("⚡ Charging");
+                chargingBadge.getStyle()
+                    .set("color", "#10b981")
+                    .set("font-size", "12px")
+                    .set("font-weight", "600")
+                    .set("padding", "4px 8px")
+                    .set("background", "#10b98120")
+                    .set("border-radius", "6px");
+                batteryInfo.add(batteryBadge, chargingBadge);
+            } else {
+                batteryInfo.add(batteryBadge);
+            }
+        }
 
-        // Quick action buttons with friendly labels
+        deviceInfo.add(nameH3, statusP, lastSeenP, batteryInfo);
+
+        // Action buttons
         HorizontalLayout actions = new HorizontalLayout();
         actions.setSpacing(true);
         
-        Button findBtn = new Button("📍 Find", VaadinIcon.LOCATION_ARROW.create());
-        findBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
-        findBtn.getStyle()
-            .set("background", "#10b981")
-            .set("border-radius", "20px");
-        findBtn.addClickListener(e -> UI.getCurrent().navigate("map"));
-        
-        Button protectBtn = new Button("🔒 Lock", VaadinIcon.LOCK.create());
-        protectBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_CONTRAST);
-        protectBtn.getStyle().set("border-radius", "20px");
-        protectBtn.addClickListener(e -> {
-            executeQuickAction(device.getDeviceId(), "lock", "🔒 Your laptop is now locked!");
+        Button locateBtn = new Button("Locate");
+        locateBtn.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_PRIMARY);
+        locateBtn.getStyle()
+            .set("border-radius", "6px")
+            .set("font-size", "14px");
+        locateBtn.addClickListener(e -> {
+            e.getSource().getUI().ifPresent(ui -> ui.navigate("map"));
         });
         
-        actions.add(findBtn, protectBtn);
+        Button lockBtn = new Button("Lock");
+        lockBtn.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        lockBtn.getStyle()
+            .set("border-radius", "6px")
+            .set("font-size", "14px");
+        lockBtn.addClickListener(e -> {
+            executeQuickAction(device.getDeviceId(), "lock", "Device locked");
+        });
+        
+        actions.add(locateBtn, lockBtn);
 
-        card.add(deviceInfo, actions);
+        card.add(deviceImageContainer, deviceInfo, actions);
         return card;
     }
     
-    private Component createUserActionCard(String icon, String title, String description, Runnable action) {
+    private Component createUserActionCard(String title, String description, Runnable action) {
         VerticalLayout card = new VerticalLayout();
         card.setPadding(true);
         card.setSpacing(false);
-        card.setAlignItems(FlexComponent.Alignment.CENTER);
+        card.setAlignItems(FlexComponent.Alignment.START);
         card.getStyle()
             .set("background", "#ffffff")
-            .set("border-radius", "20px")
-            .set("border", "2px solid #e5e7eb")
-            .set("box-shadow", "0 4px 15px rgba(0, 0, 0, 0.1)")
+            .set("border-radius", "12px")
+            .set("border", "1px solid #e5e7eb")
+            .set("box-shadow", "0 1px 3px rgba(0, 0, 0, 0.1)")
             .set("flex", "1")
-            .set("text-align", "center")
             .set("cursor", "pointer")
-            .set("transition", "all 0.3s ease")
-            .set("min-height", "150px")
-            .set("justify-content", "center")
-            .set("max-width", "250px");
-
-        // Hover effect
-        card.getElement().addEventListener("mouseenter", e -> {
-            card.getStyle()
-                .set("box-shadow", "0 8px 25px rgba(0, 0, 0, 0.15)")
-                .set("transform", "translateY(-5px)")
-                .set("border-color", "#10b981");
-        });
-        
-        card.getElement().addEventListener("mouseleave", e -> {
-            card.getStyle()
-                .set("box-shadow", "0 4px 15px rgba(0, 0, 0, 0.1)")
-                .set("transform", "translateY(0)")
-                .set("border-color", "#e5e7eb");
-        });
+            .set("transition", "all 0.2s ease")
+            .set("padding", "20px")
+            .set("max-width", "300px");
 
         card.addClickListener(e -> action.run());
 
-        Span iconSpan = new Span(icon);
-        iconSpan.getStyle()
-            .set("font-size", "2.5rem")
-            .set("margin-bottom", "1rem");
-
         H3 titleH3 = new H3(title);
         titleH3.getStyle()
-            .set("color", "#1f2937")
-            .set("font-size", "1.1rem")
+            .set("color", "#111827")
+            .set("font-size", "16px")
             .set("font-weight", "600")
-            .set("margin", "0 0 0.5rem 0");
+            .set("margin", "0 0 4px 0");
 
         Paragraph desc = new Paragraph(description);
         desc.getStyle()
             .set("color", "#6b7280")
-            .set("font-size", "0.9rem")
-            .set("margin", "0")
-            .set("line-height", "1.4");
+            .set("font-size", "14px")
+            .set("margin", "0");
 
-        card.add(iconSpan, titleH3, desc);
+        card.add(titleH3, desc);
         return card;
     }
     

@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.service.SimpleAuthService;
+import com.example.demo.service.PerfectAuthService;
 import com.example.demo.service.DeviceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -21,7 +21,7 @@ import java.nio.file.Paths;
 public class SecureAgentController {
 
     @Autowired
-    private SimpleAuthService authService;
+    private PerfectAuthService authService;
     
     @Autowired
     private DeviceService deviceService;
@@ -36,12 +36,12 @@ public class SecureAgentController {
             @PathVariable String filename) {
         
         // SECURITY CHECK: Verify user authentication
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             System.err.println("🚨 SECURITY: Unauthorized access attempt to agent file: " + platform + "/" + filename);
             return ResponseEntity.status(401).build();
         }
         
-        String currentUser = authService.getCurrentUser();
+        String currentUser = authService.getLoggedInUser();
         System.out.println("✅ SECURITY: Authenticated user " + currentUser + " accessing agent file: " + platform + "/" + filename);
         
         try {
@@ -87,12 +87,12 @@ public class SecureAgentController {
     public ResponseEntity<String> getAgentConfig(@PathVariable String deviceId) {
         
         // SECURITY CHECK: Verify user authentication
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             System.err.println("🚨 SECURITY: Unauthorized access attempt to agent config for device: " + deviceId);
             return ResponseEntity.status(401).build();
         }
         
-        String currentUser = authService.getCurrentUser();
+        String currentUser = authService.getLoggedInUser();
         
         // SECURITY CHECK: Verify user owns the device
         var deviceOpt = deviceService.findByDeviceId(deviceId);

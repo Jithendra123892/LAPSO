@@ -260,17 +260,13 @@ public class ContinuousOperationService {
      */
     private void checkNetworkConnectivity() {
         try {
-            // Simple connectivity check
-            boolean isConnected = java.net.InetAddress.getByName("google.com").isReachable(5000);
-            systemMetrics.put("networkStatus", isConnected ? "CONNECTED" : "DISCONNECTED");
-            
-            if (!isConnected) {
-                logger.warn("⚠️ Network connectivity lost - operating in offline mode");
-            }
+            // Network connectivity check disabled - LAPSO works locally
+            // External internet not required for device tracking
+            systemMetrics.put("networkStatus", "LOCAL");
             
         } catch (Exception e) {
             systemMetrics.put("networkStatus", "ERROR");
-            logger.warn("⚠️ Network check failed: {}", e.getMessage());
+            logger.debug("Network check skipped: {}", e.getMessage());
         }
     }
     

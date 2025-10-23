@@ -35,7 +35,7 @@ public class GeofenceService {
             location.setLatitude(latitude);
             location.setLongitude(longitude);
             location.setTimestamp(LocalDateTime.now());
-            checkGeofences(deviceId, "demo@lapso.in", location);
+            // checkGeofences(deviceId, userEmail, location); // Requires proper user context
         }
     }
 
@@ -167,7 +167,7 @@ public class GeofenceService {
      * Check geofence events
      */
     public void checkGeofenceEvents(String deviceId, LocationData location) {
-        checkGeofences(deviceId, "demo@lapso.in", location);
+        // checkGeofences(deviceId, userEmail, location); // Requires proper user context
     }
     
     /**

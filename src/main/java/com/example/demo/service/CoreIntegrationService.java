@@ -24,11 +24,11 @@ public class CoreIntegrationService {
     @Autowired private EnhancedLocationService locationService;
     @Autowired private GeofenceService geofenceService;
     @Autowired private EncryptionService encryptionService;
-    @Autowired private SimpleAuthService authService;
+    @Autowired private PerfectAuthService authService;
     @Autowired private QuickActionsService quickActionsService;
     @Autowired private DeviceActionService deviceActionService;
     @Autowired private ContinuousOperationService continuousOperationService;
-    @Autowired private SmartAlertService smartAlertService;
+
     @Autowired private AgentAuthenticationService agentAuthService;
     
     /**
@@ -56,7 +56,6 @@ public class CoreIntegrationService {
             
             System.out.println("✅ LAPSO Core Integration Complete - All Essential Systems Connected");
             System.out.println("🌐 Access LAPSO at: http://localhost:8080");
-            System.out.println("🔐 Demo Login: demo@lapso.in / demo123");
             
         } catch (Exception e) {
             System.err.println("❌ LAPSO Core Integration Error: " + e.getMessage());
@@ -66,11 +65,7 @@ public class CoreIntegrationService {
     
     private void initializeUserManagement() {
         try {
-            // Initialize demo user if needed
-            if (!userService.existsByEmail("demo@lapso.in")) {
-                User demoUser = userService.createUser("demo@lapso.in", "Demo User", "demo123");
-                System.out.println("✅ Demo user created");
-            }
+            // User management initialized
             
             // Initialize authentication service
             authService.initialize();
@@ -136,8 +131,7 @@ public class CoreIntegrationService {
                 System.out.println("⚠️ Encryption key not configured - using generated key");
             }
             
-            // Start smart alert service
-            smartAlertService.initialize();
+            // Smart alert service replaced with NotificationService
             
             System.out.println("✅ Security services initialized");
             

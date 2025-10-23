@@ -40,8 +40,46 @@ start-lapso-complete.bat
 
 ### **Access the Application**
 - **URL**: http://localhost:8080
-- **Demo Login**: demo@lapso.in / demo123
+- **Admin Login**: admin@lapso.in / admin123
+- **Registration**: Create your account through the web interface
 - **Register**: Create your own account through the UI
+
+---
+
+## How to run (Windows / PowerShell)
+
+These are the recommended steps for a local run on Windows using PowerShell. Java 17+ is required; Maven is optional because this project ships with the Maven Wrapper.
+
+1) From the project root, start the app in dev mode
+
+```powershell
+.# using Maven Wrapper (recommended)
+./mvnw.cmd spring-boot:run
+
+# if Maven is installed globally, this also works
+mvn spring-boot:run
+```
+
+2) Open the app and sign in
+
+- URL: http://localhost:8080
+- Default admin: admin@lapso.in / admin123
+
+3) Optional: build a runnable JAR
+
+```powershell
+./mvnw.cmd -DskipTests clean package
+
+# then run the generated JAR from the target folder (exact version may vary)
+java -jar .\target\laptop-tracker-*.jar
+```
+
+Notes
+
+- First run may take a minute while Vaadin builds the frontend.
+- Stop the app with Ctrl+C in the terminal.
+- PostgreSQL is optional; by default, an in-memory H2 database is used for development.
+- Download page: http://localhost:8080/download-agent (Windows/macOS/Linux installers)
 
 ---
 
@@ -108,19 +146,27 @@ start-lapso-complete.bat
 
 ---
 
-## 📱 **Device Agents**
+## � Connectivity (Diagrams + Explanation)
+
+For a single page with the full connectivity setup (architecture + end-to-end sequence) using Mermaid diagrams, see:
+
+- docs/CONNECTIVITY.md — Email/password authentication, agent heartbeat, command flow, map view, and export-to-image tips.
+
+You can view the diagrams in VS Code Markdown Preview or on GitHub and export them as PNG/SVG.
+
+## �📱 **Device Agents**
 
 ### **Windows Agent** (`lapso-installer.ps1`)
 ```powershell
 # Download and run
-Invoke-WebRequest -Uri "http://localhost:8080/agents/windows/lapso-installer.ps1" -OutFile "lapso-installer.ps1"
+Invoke-WebRequest -Uri "http://localhost:8080/api/agents/download/windows/lapso-installer.ps1" -OutFile "lapso-installer.ps1"
 PowerShell -ExecutionPolicy Bypass -File "lapso-installer.ps1"
 ```
 
 ### **macOS/Linux Agent** (`lapso-installer.sh`)
 ```bash
 # Download and run
-curl -O http://localhost:8080/agents/macos/lapso-installer.sh
+curl -O http://localhost:8080/api/agents/download/macos/lapso-installer.sh
 chmod +x lapso-installer.sh
 ./lapso-installer.sh
 ```
@@ -128,7 +174,7 @@ chmod +x lapso-installer.sh
 ### **Universal Python Agent** (`lapso-agent.py`)
 ```bash
 # Download and run
-curl -O http://localhost:8080/agents/universal/lapso-agent.py
+curl -O http://localhost:8080/api/agents/download/universal/lapso-agent.py
 python3 lapso-agent.py
 ```
 
@@ -222,7 +268,7 @@ src/
 ### **Authentication**
 - Session-based authentication (no JWT complexity)
 - Simple login/logout functionality
-- Demo account for testing (demo@lapso.in / demo123)
+- User registration and authentication system
 - User registration through web interface
 
 ### **Data Protection**
@@ -264,10 +310,10 @@ GET    /api/system/metrics       # Performance metrics
 
 ### **Agent Downloads**
 ```
-GET    /agents/windows/lapso-installer.ps1    # Windows agent
-GET    /agents/macos/lapso-installer.sh       # macOS agent
-GET    /agents/linux/lapso-installer.sh       # Linux agent
-GET    /agents/universal/lapso-agent.py       # Python agent
+GET    /api/agents/download/windows/lapso-installer.ps1    # Windows agent
+GET    /api/agents/download/macos/lapso-installer.sh       # macOS agent
+GET    /api/agents/download/linux/lapso-installer.sh       # Linux agent
+GET    /api/agents/download/universal/lapso-agent.py       # Python agent
 ```
 
 ---
@@ -469,7 +515,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Your LAPSO installation is successful when you see:
 
 ✅ **Application Status**: Running on http://localhost:8080  
-✅ **Login**: Demo account works (demo@lapso.in / demo123)  
+✅ **Login**: Admin login works (admin@lapso.in / admin123)  
 ✅ **Dashboard**: Clean interface loads properly  
 ✅ **Agent Downloads**: All platform agents available  
 ✅ **Device Registration**: Can add and manage devices  
@@ -488,7 +534,7 @@ cd LAPSO
 mvn spring-boot:run
 
 # Then visit: http://localhost:8080
-# Login with: demo@lapso.in / demo123
+# Login with: admin@lapso.in / admin123
 ```
 
 **Your free, open-source laptop tracking system is ready!** 🛡️

@@ -470,4 +470,83 @@ public class NotificationService {
             System.err.println("❌ Failed to send notification: " + e.getMessage());
         }
     }
+    
+    /**
+     * Send emergency alert - REAL IMPLEMENTATION
+     */
+    public void sendEmergencyAlert(String userEmail, String deviceName, String alertType, String message) {
+        try {
+            String subject = "🚨 LAPSO EMERGENCY: " + alertType;
+            String body = "EMERGENCY ALERT\n\n" +
+                         "Device: " + deviceName + "\n" +
+                         "Alert Type: " + alertType + "\n" +
+                         "Message: " + message + "\n\n" +
+                         "Time: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\n\n" +
+                         "Please take immediate action.\n\n" +
+                         "LAPSO Security Team";
+            
+            sendEmailNotification(userEmail, subject, body);
+            
+            if (webSocketService != null) {
+                webSocketService.sendAlert(userEmail, "emergency", message, null);
+            }
+            
+            System.out.println("🚨 Emergency alert sent to: " + userEmail);
+        } catch (Exception e) {
+            System.err.println("Failed to send emergency alert: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Send critical alert - REAL IMPLEMENTATION
+     */
+    public void sendCriticalAlert(String userEmail, String deviceName, String alertType, String message) {
+        try {
+            String subject = "🔴 LAPSO CRITICAL: " + alertType;
+            String body = "CRITICAL ALERT\n\n" +
+                         "Device: " + deviceName + "\n" +
+                         "Alert Type: " + alertType + "\n" +
+                         "Message: " + message + "\n\n" +
+                         "Time: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\n\n" +
+                         "Immediate attention required.\n\n" +
+                         "LAPSO Security Team";
+            
+            sendEmailNotification(userEmail, subject, body);
+            
+            if (webSocketService != null) {
+                webSocketService.sendAlert(userEmail, "critical", message, null);
+            }
+            
+            System.out.println("🔴 Critical alert sent to: " + userEmail);
+        } catch (Exception e) {
+            System.err.println("Failed to send critical alert: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Send theft alert - REAL IMPLEMENTATION
+     */
+    public void sendTheftAlert(String userEmail, String message) {
+        try {
+            String subject = "🚨 LAPSO THEFT DETECTION ALERT";
+            String body = "THEFT DETECTED!\n\n" +
+                         message + "\n\n" +
+                         "Time: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\n\n" +
+                         "IMMEDIATE ACTION REQUIRED:\n" +
+                         "1. Verify if you moved the device\n" +
+                         "2. Contact authorities if stolen\n" +
+                         "3. Use remote lock/wipe if necessary\n\n" +
+                         "LAPSO Security Team";
+            
+            sendEmailNotification(userEmail, subject, body);
+            
+            if (webSocketService != null) {
+                webSocketService.sendAlert(userEmail, "theft", message, null);
+            }
+            
+            System.out.println("🚨 Theft alert sent to: " + userEmail);
+        } catch (Exception e) {
+            System.err.println("Failed to send theft alert: " + e.getMessage());
+        }
+    }
 }

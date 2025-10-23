@@ -30,16 +30,26 @@ print_info() {
     echo -e "${CYAN}ℹ️ $1${NC}"
 }
 
-# Check for required parameters
-if [[ $# -lt 2 ]]; then
-    print_error "Usage: $0 <DeviceId> <UserEmail> [ServerUrl]"
-    print_info "Example: $0 LAPSO-ABC123 user@example.com http://localhost:8080"
-    exit 1
+# Auto-detect Device ID and prompt for email if not provided
+DEVICE_ID=$(system_profiler SPHardwareDataType | awk -F': ' '/Serial Number/{print $2}')
+if [[ -z "$DEVICE_ID" ]]; then
+    DEVICE_ID=$(scutil --get ComputerName 2>/dev/null)
 fi
 
-DEVICE_ID="$1"
-USER_EMAIL="$2"
-SERVER_URL="${3:-http://localhost:8080}"
+# Server URL (default)
+SERVER_URL="${SERVER_URL:-http://localhost:8080}"
+
+# Accept email as $1 for non-interactive; otherwise prompt
+if [[ -n "$1" ]]; then
+    USER_EMAIL="$1"
+fi
+if [[ -z "$USER_EMAIL" ]]; then
+    read -r -p "Enter your LAPSO account email: " USER_EMAIL
+fi
+if [[ -z "$USER_EMAIL" ]]; then
+    print_error "User email is required"
+    exit 1
+fi
 
 echo -e "${GREEN}🛡️ LAPSO Agent Installer for macOS${NC}"
 echo -e "${GREEN}===================================${NC}"
@@ -78,7 +88,7 @@ print_status "Created LAPSO directory: $LAPSO_DIR"
 # Download agent script
 print_info "Downloading LAPSO agent..."
 AGENT_SCRIPT="$LAPSO_DIR/lapso-agent.sh"
-AGENT_URL="$SERVER_URL/agents/macos/laptop-tracker-agent.sh"
+AGENT_URL="$SERVER_URL/api/agents/download/macos/laptop-tracker-agent.sh"
 
 if curl -f -s -o "$AGENT_SCRIPT" "$AGENT_URL"; then
     sudo chmod +x "$AGENT_SCRIPT"
@@ -212,6 +222,22 @@ UNINSTALLER="$LAPSO_DIR/uninstall.sh"
 sudo tee "$UNINSTALLER" > /dev/null <<EOF
 #!/bin/bash
 echo "🗑️ Uninstalling LAPSO Agent..."
+
+# Read config to notify server
+CONFIG_FILE="/usr/local/lapso/config.json"
+if [ -f "\$CONFIG_FILE" ]; then
+    DEVICE_ID=\$(grep -o '"deviceId": *"[^"]*"' "\$CONFIG_FILE" | sed 's/"deviceId": *"\([^"]*\)"/\1/')
+    USER_EMAIL=\$(grep -o '"userEmail": *"[^"]*"' "\$CONFIG_FILE" | sed 's/"userEmail": *"\([^"]*\)"/\1/')
+    SERVER_URL=\$(grep -o '"serverUrl": *"[^"]*"' "\$CONFIG_FILE" | sed 's/"serverUrl": *"\([^"]*\)"/\1/')
+    
+    if [ -n "\$DEVICE_ID" ] && [ -n "\$USER_EMAIL" ] && [ -n "\$SERVER_URL" ]; then
+        curl -X POST "\$SERVER_URL/api/agent/uninstall" \\
+            -H "Content-Type: application/json" \\
+            -d "{\"deviceId\":\"\$DEVICE_ID\",\"userEmail\":\"\$USER_EMAIL\",\"reason\":\"User uninstalled\"}" \\
+            --silent --show-error || echo "⚠️ Could not notify server (continuing with uninstall)"
+        echo "✅ Notified server of uninstall"
+    fi
+fi
 
 # Stop and unload LaunchDaemon
 sudo launchctl unload /Library/LaunchDaemons/com.lapso.agent.plist 2>/dev/null || true

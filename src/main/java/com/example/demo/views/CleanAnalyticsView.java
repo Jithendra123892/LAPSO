@@ -1,6 +1,6 @@
 package com.example.demo.views;
 
-import com.example.demo.service.SimpleAuthService;
+import com.example.demo.service.PerfectAuthService;
 import com.example.demo.service.AnalyticsService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
@@ -26,17 +26,17 @@ import java.util.Map;
 public class CleanAnalyticsView extends VerticalLayout {
 
     @Autowired
-    private SimpleAuthService authService;
+    private PerfectAuthService authService;
     
     @Autowired
     private AnalyticsService analyticsService;
 
-    public CleanAnalyticsView(SimpleAuthService authService, AnalyticsService analyticsService) {
+    public CleanAnalyticsView(PerfectAuthService authService, AnalyticsService analyticsService) {
         this.authService = authService;
         this.analyticsService = analyticsService;
         
         // Check authentication
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             UI.getCurrent().navigate("login");
             return;
         }
@@ -135,7 +135,7 @@ public class CleanAnalyticsView extends VerticalLayout {
         overviewCards.getStyle()
             .set("margin-bottom", "2rem");
 
-        String userEmail = authService.getCurrentUser();
+        String userEmail = authService.getLoggedInUser();
         Map<String, Object> analytics = analyticsService.getDashboardAnalytics(userEmail != null ? userEmail : "");
 
         overviewCards.add(

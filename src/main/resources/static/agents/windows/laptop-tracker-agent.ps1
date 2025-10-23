@@ -1,16 +1,204 @@
-# 🛡️ LAPSO Windows Agent - Enhanced Device Tracking
-# 🚀 Better than Microsoft Find My Device - More Features, Always Free
-# ✨ Automatic updates every 30 seconds vs Microsoft's manual refresh
-# 🎯 Cross-platform support, real-time commands, advanced monitoring
+<#
+    LAPSO Windows Agent
+    - Sends periodic heartbeats to the server with device metadata
+    - Minimal dependencies; designed to run as Scheduled Task via installer
+#>
 
 param(
-    [string]$ServerUrl = "http://localhost:8080",
-    [string]$SerialNumber = $env:COMPUTERNAME
+        [Parameter(Mandatory=$true)] [string]$DeviceId,
+        [Parameter(Mandatory=$true)] [string]$UserEmail,
+        [string]$ServerUrl = "http://localhost:8080"
 )
 
-# Function to get device information
+# Agent metadata
+$AgentVersion = "1.0.0"
+$LastUpdateCheck = Get-Date "2000-01-01"
+$UpdateCheckIntervalMinutes = 30
+
+# Ensure execution policy allows running this process
+try { Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction SilentlyContinue } catch {}
+
+function Write-Log {
+    param([string]$Message,[string]$Level = "INFO")
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $line = "[$timestamp] [$Level] $Message"
+    Write-Host $line
+    try {
+        $logDir = Join-Path $env:ProgramData "Lapso"
+        if (-not (Test-Path $logDir)) { New-Item -Path $logDir -ItemType Directory -Force | Out-Null }
+        $logFile = Join-Path $logDir "agent.log"
+        Add-Content -Path $logFile -Value $line
+    } catch { }
+}
+
+if ([string]::IsNullOrWhiteSpace($DeviceId)) { Write-Error "DeviceId is required"; exit 1 }
+if ([string]::IsNullOrWhiteSpace($UserEmail)) { Write-Error "UserEmail is required"; exit 1 }
+
+function Send-Heartbeat {
+    param(
+        [string]$DeviceId,
+        [string]$UserEmail,
+        [hashtable]$DeviceInfo,
+        [hashtable]$Location
+    )
+    try {
+        $body = @{
+            deviceId = $DeviceId
+            userEmail = $UserEmail
+            deviceName = $env:COMPUTERNAME
+            operatingSystem = $DeviceInfo.operatingSystem
+            manufacturer = $DeviceInfo.brand
+            model = $DeviceInfo.model
+            batteryLevel = $DeviceInfo.batteryPercentage
+            agentVersion = $AgentVersion
+        }
+        if ($Location -and $Location.latitude -and $Location.longitude) {
+            $body.latitude = $Location.latitude
+            $body.longitude = $Location.longitude
+            if ($Location.accuracy) { $body.accuracy = [double]$Location.accuracy }
+            if ($Location.source) { $body.locationSource = $Location.source }
+            if ($Location.city -and $Location.country) { $body.address = "$($Location.city), $($Location.country)" }
+        }
+        $json = $body | ConvertTo-Json -Depth 5
+        $uri = "$ServerUrl/api/agent/heartbeat"
+        $resp = Invoke-RestMethod -Uri $uri -Method Post -Body $json -ContentType 'application/json' -TimeoutSec 15
+        return $true
+    } catch {
+        Write-Log ("Heartbeat failed: {0}" -f $_.Exception.Message) "ERROR"
+        return $false
+    }
+}
+
+# Compare two semantic versions. Returns -1 if a<b, 0 if equal, 1 if a>b
+function Compare-SemVer {
+    param([string]$a,[string]$b)
+    if (-not $a) { $a = "0.0.0" }
+    if (-not $b) { $b = "0.0.0" }
+    $pa = $a.Split('.') | ForEach-Object { [int]($_) }
+    $pb = $b.Split('.') | ForEach-Object { [int]($_) }
+    for ($i=0; $i -lt [Math]::Max($pa.Count,$pb.Count); $i++) {
+        $va = if ($i -lt $pa.Count) { $pa[$i] } else { 0 }
+        $vb = if ($i -lt $pb.Count) { $pb[$i] } else { 0 }
+        if ($va -lt $vb) { return -1 }
+        if ($va -gt $vb) { return 1 }
+    }
+    return 0
+}
+
+function Invoke-AgentSelfUpdate {
+    param([string]$DeviceId,[string]$UserEmail,[string]$ServerUrl)
+    try {
+        # Throttle update checks
+        if (((Get-Date) - $LastUpdateCheck).TotalMinutes -lt $UpdateCheckIntervalMinutes) { return }
+        $script:LastUpdateCheck = Get-Date
+
+        $versionUri = "$ServerUrl/api/agent/version?platform=windows"
+        $vr = Invoke-RestMethod -Uri $versionUri -Method Get -TimeoutSec 10
+        $remoteVersion = "$($vr.version)"
+        if ([string]::IsNullOrWhiteSpace($remoteVersion)) { return }
+        if ((Compare-SemVer -a $AgentVersion -b $remoteVersion) -ge 0) { return }
+
+        Write-Log ("New agent version available: {0} -> {1}" -f $AgentVersion,$remoteVersion) "INFO"
+    $downloadUrl = if ($vr.url) { $vr.url } else { "$ServerUrl/api/agents/download/windows/laptop-tracker-agent.ps1" }
+    if ($downloadUrl -and ($downloadUrl -notlike 'http*')) { $downloadUrl = "$ServerUrl$downloadUrl" }
+
+        $tempNew = Join-Path $env:TEMP ("lapso-agent-" + $remoteVersion + ".ps1")
+        Invoke-WebRequest -Uri $downloadUrl -OutFile $tempNew -UseBasicParsing -TimeoutSec 30
+
+        # Optional integrity check
+        if ($vr.sha256) {
+            $hash = (Get-FileHash -Algorithm SHA256 -Path $tempNew).Hash.ToLower()
+            if ($hash -ne ("" + $vr.sha256).ToLower()) {
+                Write-Log "Downloaded agent failed SHA256 validation. Aborting update." "ERROR"
+                Remove-Item -Path $tempNew -Force -ErrorAction SilentlyContinue
+                return
+            }
+        }
+
+        $current = $MyInvocation.MyCommand.Path
+        $updater = Join-Path $env:TEMP ("lapso-updater-" + (Get-Date -Format 'yyyyMMddHHmmss') + ".ps1")
+        $updaterContent = @'
+param(
+    [string]$NewPath,
+    [string]$CurrentPath,
+    [string]$DeviceId,
+    [string]$UserEmail,
+    [string]$ServerUrl
+)
+Start-Sleep -Seconds 2
+Copy-Item -Path $NewPath -Destination $CurrentPath -Force
+try { Remove-Item -Path $NewPath -Force -ErrorAction SilentlyContinue } catch {}
+Start-Process -FilePath powershell -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File', $CurrentPath, '-DeviceId', $DeviceId, '-UserEmail', $UserEmail, '-ServerUrl', $ServerUrl) | Out-Null
+try { Remove-Item -Path $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue } catch {}
+'@
+        Set-Content -Path $updater -Value $updaterContent -Encoding UTF8
+        Write-Log "Launching updater and exiting for self-restart..." "INFO"
+        Start-Process -FilePath powershell -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File', $updater, '-NewPath', $tempNew, '-CurrentPath', $current, '-DeviceId', $DeviceId, '-UserEmail', $UserEmail, '-ServerUrl', $ServerUrl) | Out-Null
+        exit 0
+    } catch {
+        Write-Log ("Self-update check failed: {0}" -f $_.Exception.Message) "WARN"
+    }
+}
+
+# Function to get REAL GPS location with high accuracy
+function Get-RealGPSLocation {
+    try {
+    Write-Log "Getting GPS location (3-meter accuracy)..." "INFO"
+        
+        # Try Windows Location API first (most accurate)
+        $location = $null
+        try {
+            Add-Type -AssemblyName System.Device
+            $watcher = New-Object System.Device.Location.GeoCoordinateWatcher
+            $watcher.Start()
+            Start-Sleep -Seconds 5
+            
+            if ($watcher.Position.Location.IsUnknown -eq $false) {
+                $location = @{
+                    latitude = $watcher.Position.Location.Latitude
+                    longitude = $watcher.Position.Location.Longitude
+                    accuracy = $watcher.Position.Location.HorizontalAccuracy
+                    source = "Windows_Location_API"
+                }
+                Write-Log "GPS Location: $($location.latitude), $($location.longitude) (±$($location.accuracy)m)" "INFO"
+            }
+            $watcher.Stop()
+        } catch {
+            Write-Log "Windows Location API not available, trying IP geolocation..." "WARN"
+        }
+        
+        # Fallback to IP-based geolocation (less accurate but still works)
+        if ($null -eq $location) {
+            try {
+                $ipInfo = Invoke-RestMethod -Uri "http://ip-api.com/json/" -TimeoutSec 10
+                if ($ipInfo.status -eq "success") {
+                    $location = @{
+                        latitude = $ipInfo.lat
+                        longitude = $ipInfo.lon
+                        accuracy = 1000.0  # IP geolocation is less accurate
+                        source = "IP_Geolocation"
+                        city = $ipInfo.city
+                        country = $ipInfo.country
+                    }
+                    Write-Log "IP Location: $($location.latitude), $($location.longitude) in $($ipInfo.city), $($ipInfo.country)" "INFO"
+                }
+            } catch {
+                Write-Log "Failed to get location via IP geolocation" "ERROR"
+            }
+        }
+        
+        return $location
+    } catch {
+        Write-Log "Error getting GPS location: $($_.Exception.Message)" "ERROR"
+        return $null
+    }
+}
+
+# Function to get comprehensive device information
 function Get-DeviceInformation {
     try {
+    Write-Log "Collecting device information..." "INFO"
+        
         # Get basic system information
         $computerSystem = Get-CimInstance Win32_ComputerSystem
         $bios = Get-CimInstance Win32_BIOS
@@ -24,7 +212,7 @@ function Get-DeviceInformation {
         
         # Get battery information if available
         $battery = Get-CimInstance -ClassName Win32_Battery -ErrorAction SilentlyContinue
-        $batteryPercentage = if ($battery) { $battery.EstimatedChargeRemaining } else { $null }
+        $batteryPercentage = if ($battery) { $battery.EstimatedChargeRemaining } else { -1 }
         $batteryStatus = if ($battery) { $battery.BatteryStatus } else { "No Battery" }
         
         # Get disk information
@@ -33,54 +221,21 @@ function Get-DeviceInformation {
         
         # Create device information object
         $deviceInfo = @{
-            serialNumber = $bios.SerialNumber
             brand = $computerSystem.Manufacturer
             model = $computerSystem.Model
-            platform = "WINDOWS"
-            platformVersion = $os.Version
-            architecture = $processor.Architecture
             operatingSystem = $os.Caption
-            ipAddress = $ipAddress
-            processor = $processor.Name
-            ram = "$([math]::Round(($memory | Measure-Object -Property Capacity -Sum).Sum / 1GB, 2)) GB"
-            storage = $storage
             batteryPercentage = $batteryPercentage
-            batteryStatus = $batteryStatus
         }
         
         return $deviceInfo
     }
     catch {
-        Write-Error "Error collecting device information: $_"
+        Write-Log "Error collecting device information: $_" "ERROR"
         return $null
     }
 }
 
-# Function to send data to server
-function Send-DeviceData {
-    param(
-        [hashtable]$Data
-    )
-    
-    try {
-        $uri = "$ServerUrl/api/agent/register"
-        $json = $Data | ConvertTo-Json
-        
-        $response = Invoke-RestMethod -Uri $uri -Method Post -Body $json -ContentType "application/json"
-        
-        if ($response.success) {
-            Write-Host "Device data sent successfully"
-            return $true
-        } else {
-            Write-Warning "Server responded with error: $($response.message)"
-            return $false
-        }
-    }
-    catch {
-        Write-Error "Error sending device data: $_"
-        return $false
-    }
-}
+## Remove legacy registration/location functions; use heartbeat only
 
 # Function to get current location (simplified - in a real implementation, you would use a location service)
 function Get-DeviceLocation {
@@ -147,37 +302,7 @@ function Get-DeviceLocation {
     }
 }
 
-# Function to send location data
-function Send-LocationData {
-    param(
-        [string]$SerialNumber,
-        [hashtable]$Location
-    )
-    
-    try {
-        $uri = "$ServerUrl/api/agent/location"
-        $data = @{
-            serialNumber = $SerialNumber
-            latitude = $Location.latitude
-            longitude = $Location.longitude
-        }
-        $json = $data | ConvertTo-Json
-        
-        $response = Invoke-RestMethod -Uri $uri -Method Post -Body $json -ContentType "application/json"
-        
-        if ($response.success) {
-            Write-Host "Location data sent successfully"
-            return $true
-        } else {
-            Write-Warning "Server responded with error: $($response.message)"
-            return $false
-        }
-    }
-    catch {
-        Write-Error "Error sending location data: $_"
-        return $false
-    }
-}
+## Remove legacy location endpoint usage
 
 # Function to get pending commands from server
 function Get-PendingCommands {
@@ -185,45 +310,22 @@ function Get-PendingCommands {
         [string]$DeviceId,
         [string]$UserEmail
     )
-    
     try {
-        $uri = "$ServerUrl/api/device-commands/poll/$DeviceId" + "?userEmail=" + [System.Web.HttpUtility]::UrlEncode($UserEmail)
-        $response = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -TimeoutSec 10
+        $uri = "$ServerUrl/api/device-commands/poll/${DeviceId}?userEmail=$UserEmail"
+        $response = Invoke-RestMethod -Uri $uri -Method Get -TimeoutSec 10
         
-        if ($response.success -and $response.commands) {
-            Write-Host "Retrieved $($response.commands.Count) pending commands"
+        Write-Log "🔍 POLL RESPONSE: success=$($response.success), commandCount=$($response.commandCount)" "INFO"
+        Write-Log "🔍 POLL RESPONSE: commands type=$($response.commands.GetType().Name), count=$($response.commands.Count)" "INFO"
+        
+        if ($response.success -and $response.commandCount -gt 0) {
+            Write-Log "Retrieved $($response.commandCount) pending commands" "INFO"
             return $response.commands
-        } else {
-            return @()
         }
-    }
-    catch {
-        Write-Warning "Error retrieving commands: $_"
         return @()
     }
-}
-
-# Function to acknowledge command sent to server
-function Send-CommandAcknowledgment {
-    param(
-        [long]$CommandId
-    )
-    
-    try {
-        $uri = "$ServerUrl/api/agent/commands/$CommandId/sent"
-        $response = Invoke-RestMethod -Uri $uri -Method Post -ContentType "application/json"
-        
-        if ($response.success) {
-            Write-Host "Command $CommandId acknowledged as sent"
-            return $true
-        } else {
-            Write-Warning "Server responded with error when acknowledging command: $($response.message)"
-            return $false
-        }
-    }
     catch {
-        Write-Error "Error acknowledging command: $_"
-        return $false
+        Write-Log "❌ POLL ERROR: $($_.Exception.Message)" "ERROR"
+        return @()
     }
 }
 
@@ -239,11 +341,11 @@ function Send-CommandResult {
         $json = $Result | ConvertTo-Json -Depth 3
         
         $response = Invoke-RestMethod -Uri $uri -Method Post -Body $json -ContentType "application/json" -TimeoutSec 10
-        Write-Host "📤 Command result sent to server" -ForegroundColor Green
+    Write-Log "Command result sent to server" "INFO"
         return $true
         
     } catch {
-        Write-Warning "Failed to send command result: $($_.Exception.Message)"
+        Write-Log "Failed to send command result: $($_.Exception.Message)" "WARN"
         return $false
     }
 }
@@ -265,15 +367,15 @@ function Send-CommandFailure {
         $response = Invoke-RestMethod -Uri $uri -Method Post -Body $json -ContentType "application/json"
         
         if ($response.success) {
-            Write-Host "Command $CommandId failure reported"
+            Write-Log "Command $CommandId failure reported" "INFO"
             return $true
         } else {
-            Write-Warning "Server responded with error when reporting command failure: $($response.message)"
+            Write-Log "Server responded with error when reporting command failure: $($response.message)" "WARN"
             return $false
         }
     }
     catch {
-        Write-Error "Error reporting command failure: $_"
+        Write-Log "Error reporting command failure: $_" "ERROR"
         return $false
     }
 }
@@ -292,22 +394,72 @@ function Execute-Command {
     }
     
     try {
-        Write-Host "🔧 Executing command: $($Command.action)" -ForegroundColor Yellow
+    Write-Log "Executing command: $($Command.action)" "INFO"
         
         switch ($Command.action) {
             "LOCK" {
-                Write-Host "🔒 Locking device..." -ForegroundColor Yellow
-                rundll32.exe user32.dll,LockWorkStation
-                $result.message = "Device locked successfully"
+                Write-Log "🔒 LOCKING DEVICE NOW..." "INFO"
+                
+                try {
+                    # Multiple lock methods to ensure it works
+                    
+                    # Method 1: Direct lock (fastest)
+                    Start-Process -FilePath "rundll32.exe" -ArgumentList "user32.dll,LockWorkStation" -WindowStyle Hidden -Wait:$false
+                    
+                    # Method 2: Create a VBS script that locks (works better from background)
+                    $vbsScript = @"
+Set objShell = CreateObject("WScript.Shell")
+objShell.Run "rundll32.exe user32.dll,LockWorkStation", 0, False
+"@
+                    $vbsPath = Join-Path $env:TEMP "lapso-lock.vbs"
+                    $vbsScript | Out-File -FilePath $vbsPath -Encoding ASCII -Force
+                    Start-Process -FilePath "wscript.exe" -ArgumentList "`"$vbsPath`"" -WindowStyle Hidden -Wait:$false
+                    
+                    # Method 3: Use PowerShell with Add-Type for direct Win32 API call
+                    $signature = @"
+[DllImport("user32.dll", SetLastError = true)]
+public static extern bool LockWorkStation();
+"@
+                    try {
+                        Add-Type -MemberDefinition $signature -Name LockWorkStation -Namespace Win32Functions -PassThru | Out-Null
+                        [Win32Functions.LockWorkStation]::LockWorkStation() | Out-Null
+                        Write-Log "Win32 API lock method executed" "INFO"
+                    } catch {
+                        Write-Log "Win32 API method skipped (may already be added)" "INFO"
+                    }
+                    
+                    # Method 4: Scheduled task with immediate execution
+                    $taskName = "LAPSO_ScreenLock"
+                    $action = New-ScheduledTaskAction -Execute "rundll32.exe" -Argument "user32.dll,LockWorkStation"
+                    $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(1)
+                    $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Highest
+                    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -DeleteExpiredTaskAfter 00:00:01
+                    
+                    Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
+                    Start-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+                    
+                    # Cleanup after 3 seconds
+                    Start-Sleep -Seconds 3
+                    Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
+                    Remove-Item -Path $vbsPath -Force -ErrorAction SilentlyContinue
+                    
+                    $result.message = "🔒 Screen locked successfully! Multiple lock methods executed."
+                    Write-Log "✅ Device locked - all lock methods executed" "INFO"
+                }
+                catch {
+                    Write-Log "❌ Lock failed: $($_.Exception.Message)" "ERROR"
+                    $result.status = "error"
+                    $result.message = "Lock failed: $($_.Exception.Message)"
+                }
             }
             
             "UNLOCK" {
-                Write-Host "🔓 Unlock command received..." -ForegroundColor Yellow
+                Write-Log "Unlock command received..." "INFO"
                 $result.message = "Unlock command received (user must unlock manually)"
             }
             
             "PLAY_SOUND" {
-                Write-Host "🔊 Playing sound..." -ForegroundColor Yellow
+                Write-Log "Playing sound..." "INFO"
                 
                 # Play multiple beeps to make it noticeable
                 for ($i = 1; $i -le 10; $i++) {
@@ -321,28 +473,54 @@ function Execute-Command {
             }
             
             "SCREENSHOT" {
-                Write-Host "📸 Taking screenshot..." -ForegroundColor Yellow
+                Write-Log "Taking screenshot..." "INFO"
                 
-                Add-Type -AssemblyName System.Windows.Forms
-                Add-Type -AssemblyName System.Drawing
-                
-                $screen = [System.Windows.Forms.Screen]::PrimaryScreen
-                $bitmap = New-Object System.Drawing.Bitmap $screen.Bounds.Width, $screen.Bounds.Height
-                $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-                $graphics.CopyFromScreen($screen.Bounds.X, $screen.Bounds.Y, 0, 0, $screen.Bounds.Size)
-                
-                $screenshotPath = "$env:TEMP\lapso-screenshot-$(Get-Date -Format 'yyyyMMdd-HHmmss').png"
-                $bitmap.Save($screenshotPath, [System.Drawing.Imaging.ImageFormat]::Png)
-                
-                $graphics.Dispose()
-                $bitmap.Dispose()
-                
-                $result.message = "Screenshot captured and saved to $screenshotPath"
-                $result.screenshotPath = $screenshotPath
+                try {
+                    Add-Type -AssemblyName System.Windows.Forms
+                    Add-Type -AssemblyName System.Drawing
+                    
+                    $screen = [System.Windows.Forms.Screen]::PrimaryScreen
+                    $bitmap = New-Object System.Drawing.Bitmap $screen.Bounds.Width, $screen.Bounds.Height
+                    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+                    $graphics.CopyFromScreen($screen.Bounds.X, $screen.Bounds.Y, 0, 0, $screen.Bounds.Size)
+                    
+                    $screenshotPath = "$env:TEMP\lapso-screenshot-$(Get-Date -Format 'yyyyMMdd-HHmmss').png"
+                    $bitmap.Save($screenshotPath, [System.Drawing.Imaging.ImageFormat]::Png)
+                    
+                    $graphics.Dispose()
+                    $bitmap.Dispose()
+                    
+                    # Upload screenshot to server
+                    Write-Log "Uploading screenshot to server..." "INFO"
+                    $uploadUri = "$ServerUrl/api/screenshots/upload/$DeviceId"
+                    
+                    # Read file as base64
+                    $fileBytes = [System.IO.File]::ReadAllBytes($screenshotPath)
+                    $base64 = [Convert]::ToBase64String($fileBytes)
+                    
+                    $uploadBody = @{
+                        deviceId = $DeviceId
+                        userEmail = $UserEmail
+                        imageData = $base64
+                        timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ss"
+                    } | ConvertTo-Json
+                    
+                    $uploadResponse = Invoke-RestMethod -Uri $uploadUri -Method Post -Body $uploadBody -ContentType 'application/json' -TimeoutSec 30
+                    
+                    # Delete local file
+                    Remove-Item -Path $screenshotPath -Force
+                    
+                    $result.message = "Screenshot captured and uploaded successfully"
+                    $result.screenshotUrl = $uploadResponse.url
+                }
+                catch {
+                    $result.status = "error"
+                    $result.message = "Screenshot failed: $($_.Exception.Message)"
+                }
             }
             
             "WIPE" {
-                Write-Host "💣 EMERGENCY WIPE COMMAND!" -ForegroundColor Red
+                Write-Log "EMERGENCY WIPE COMMAND!" "WARN"
                 
                 # Lock device immediately
                 rundll32.exe user32.dll,LockWorkStation
@@ -353,7 +531,7 @@ function Execute-Command {
             }
             
             "UPDATE_LOCATION" {
-                Write-Host "📍 Updating location..." -ForegroundColor Yellow
+                Write-Log "Updating location..." "INFO"
                 $result.message = "Location update requested - will be sent in next heartbeat"
             }
             
@@ -363,12 +541,12 @@ function Execute-Command {
             }
         }
         
-        Write-Host "✅ Command completed: $($Command.action)" -ForegroundColor Green
+    Write-Log "Command completed: $($Command.action)" "INFO"
         
     } catch {
         $result.status = "error"
         $result.message = "Command execution failed: $($_.Exception.Message)"
-        Write-Host "❌ Command failed: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Log "Command failed: $($_.Exception.Message)" "ERROR"
     }
     
     return $result
@@ -381,11 +559,11 @@ function Process-PendingCommands {
         [string]$UserEmail
     )
     
-    Write-Host "🔍 Checking for pending commands..." -ForegroundColor Cyan
+    Write-Log "Checking for pending commands..." "INFO"
     $commands = Get-PendingCommands -DeviceId $DeviceId -UserEmail $UserEmail
     
     if ($commands.Count -gt 0) {
-        Write-Host "📋 Found $($commands.Count) pending commands" -ForegroundColor Green
+    Write-Log "Found $($commands.Count) pending commands" "INFO"
         
         foreach ($command in $commands) {
             try {
@@ -408,44 +586,31 @@ function Process-PendingCommands {
             }
         }
     } else {
-        Write-Host "📭 No pending commands" -ForegroundColor Gray
+        Write-Log "No pending commands" "INFO"
     }
 }
 
-# Main execution
-Write-Host "Starting Laptop Tracker Agent for Windows..."
-Write-Host "Server URL: $ServerUrl"
-Write-Host "Device Serial Number: $SerialNumber"
+# Main execution: heartbeat loop with command polling
+Write-Log "Starting LAPSO Agent..." "INFO"
+Write-Log ("Server URL: {0}" -f $ServerUrl) "INFO"
+Write-Log ("Device ID: {0}" -f $DeviceId) "INFO"
+Write-Log ("User Email: {0}" -f $UserEmail) "INFO"
+Write-Log ("Agent Version: {0}" -f $AgentVersion) "INFO"
+Write-Log "Agent is running - sending heartbeats and polling for commands every 30 seconds" "INFO"
 
-# Collect device information
-Write-Host "Collecting device information..."
-$deviceInfo = Get-DeviceInformation
-
-if ($deviceInfo) {
-    Write-Host "Device information collected successfully"
-    
-    # Send device information to server
-    Write-Host "Sending device information to server..."
-    $success = Send-DeviceData -Data $deviceInfo
-    
-    if ($success) {
-        Write-Host "Device registered successfully"
-        
-        # Get and send location data
-        Write-Host "Getting device location..."
+while ($true) {
+    try {
+        # Check for agent updates periodically
+        Invoke-AgentSelfUpdate -DeviceId $DeviceId -UserEmail $UserEmail -ServerUrl $ServerUrl
+        # Send heartbeat with device info and location
+        $deviceInfo = Get-DeviceInformation
         $location = Get-DeviceLocation
-        Write-Host "Sending location data..."
-        Send-LocationData -SerialNumber $deviceInfo.serialNumber -Location $location
+        [void](Send-Heartbeat -DeviceId $DeviceId -UserEmail $UserEmail -DeviceInfo $deviceInfo -Location $location)
         
-        # Process any pending commands
-        # Note: You need to provide the user email - this would typically be configured during installation
-        $userEmail = "demo@lapso.in"  # This should be configured during agent installation
-        Process-PendingCommands -DeviceId $deviceInfo.serialNumber -UserEmail $userEmail
-    } else {
-        Write-Error "Failed to register device"
+        # Poll for and execute pending commands
+        Process-PendingCommands -DeviceId $DeviceId -UserEmail $UserEmail
+    } catch {
+        Write-Log ("Agent loop error: {0}" -f $_.Exception.Message) "ERROR"
     }
-} else {
-    Write-Error "Failed to collect device information"
+    Start-Sleep -Seconds 30
 }
-
-Write-Host "Laptop Tracker Agent execution completed"

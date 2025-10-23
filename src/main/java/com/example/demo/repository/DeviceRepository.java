@@ -60,4 +60,14 @@ public interface DeviceRepository extends JpaRepository<Device, Long> {
     @Transactional
     @Query("DELETE FROM Device d WHERE d.deviceId LIKE CONCAT(:prefix, '%')")
     long deleteByDeviceIdStartingWith(@Param("prefix") String prefix);
+    
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Device d WHERE d.deviceId IN :deviceIds")
+    int deleteByDeviceIdIn(@Param("deviceIds") List<String> deviceIds);
+    
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Device d WHERE d.deviceName IN :deviceNames")
+    int deleteByDeviceNameIn(@Param("deviceNames") List<String> deviceNames);
 }

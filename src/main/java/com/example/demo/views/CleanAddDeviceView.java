@@ -1,6 +1,6 @@
 package com.example.demo.views;
 
-import com.example.demo.service.SimpleAuthService;
+import com.example.demo.service.PerfectAuthService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -27,13 +27,13 @@ import java.util.UUID;
 public class CleanAddDeviceView extends VerticalLayout {
 
     @Autowired
-    private SimpleAuthService authService;
+    private PerfectAuthService authService;
 
-    public CleanAddDeviceView(SimpleAuthService authService) {
+    public CleanAddDeviceView(PerfectAuthService authService) {
         this.authService = authService;
         
         // Check authentication
-        if (!authService.isAuthenticated()) {
+        if (!authService.isLoggedIn()) {
             UI.getCurrent().navigate("login");
             return;
         }
@@ -106,7 +106,7 @@ public class CleanAddDeviceView extends VerticalLayout {
         leftSection.add(backBtn, title);
 
         // User info
-        String currentUser = authService.getCurrentUser();
+        String currentUser = authService.getLoggedInUser();
         String displayName = currentUser != null && currentUser.contains("@") ? 
             currentUser.split("@")[0] : "User";
         
@@ -245,7 +245,7 @@ public class CleanAddDeviceView extends VerticalLayout {
     private void registerAndDownloadDevice(String platform, String filename) {
         try {
             String deviceId = "LAPSO-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-            String userEmail = authService.getCurrentUser();
+            String userEmail = authService.getLoggedInUser();
             
             // Show registration notification
             Notification.show(

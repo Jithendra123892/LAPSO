@@ -4,7 +4,7 @@
 param(
     [string]$ServerUrl = "http://localhost:8080",
     [string]$DeviceId = "",
-    [string]$UserEmail = "demo@lapso.in",
+    [string]$UserEmail = "",
     [int]$UpdateInterval = 30,
     [string]$ConfigFile = "$env:APPDATA\LAPSO\config.json"
 )

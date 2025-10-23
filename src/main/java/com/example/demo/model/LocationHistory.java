@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "location_history")
+@Table(name = "location_history", indexes = {
+    @Index(name = "idx_device_timestamp", columnList = "device_id,timestamp"),
+    @Index(name = "idx_timestamp", columnList = "timestamp")
+})
 public class LocationHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,10 +19,24 @@ public class LocationHistory {
 
     private Double latitude;
     private Double longitude;
+    private Double altitude;
     private String address;
 
     @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
+    
+    private Double accuracy; // in meters
+    
+    @Column(name = "location_source")
+    private String locationSource; // GPS, WIFI, CELL, IP
+    
+    private Double speed; // km/h
+    
+    @Column(name = "battery_level")
+    private Integer batteryLevel;
+    
+    @Column(name = "is_online")
+    private Boolean isOnline;
 
     public LocationHistory() {
         this.timestamp = LocalDateTime.now();
@@ -51,4 +68,22 @@ public class LocationHistory {
 
     public LocalDateTime getTimestamp() { return timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+
+    public Double getAltitude() { return altitude; }
+    public void setAltitude(Double altitude) { this.altitude = altitude; }
+
+    public Double getAccuracy() { return accuracy; }
+    public void setAccuracy(Double accuracy) { this.accuracy = accuracy; }
+
+    public String getLocationSource() { return locationSource; }
+    public void setLocationSource(String locationSource) { this.locationSource = locationSource; }
+
+    public Double getSpeed() { return speed; }
+    public void setSpeed(Double speed) { this.speed = speed; }
+
+    public Integer getBatteryLevel() { return batteryLevel; }
+    public void setBatteryLevel(Integer batteryLevel) { this.batteryLevel = batteryLevel; }
+
+    public Boolean getIsOnline() { return isOnline; }
+    public void setIsOnline(Boolean isOnline) { this.isOnline = isOnline; }
 }
