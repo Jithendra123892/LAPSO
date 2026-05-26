@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@layer base {
+  * {
+    border-color: #2D3436;
+  }
+
+  body {
+    background-color: #F7F7F7;
+    color: #2D3436;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+  }
+}
+
+@layer components {
+  .neo-card {
+    background-color: #FFFFFF;
+    border-width: 3px;
+    border-style: solid;
+    border-color: #2D3436;
+    box-shadow: 4px 4px 0 0 #2D3436;
+    padding: 1.25rem;
+  }
+
+  .neo-card-hover {
+    transition: all 100ms ease-out;
+  }
+
+  .neo-card-hover:hover {
+    transform: translateX(-2px) translateY(-2px);
+    box-shadow: 6px 6px 0 0 #2D3436;
+  }
+
+  .neo-input {
+    border-width: 3px;
+    border-style: solid;
+    border-color: #2D3436;
+    background-color: #FFFFFF;
+    padding: 0.5rem 1rem;
+    font-family: 'Inter', sans-serif;
+    color: #2D3436;
+    outline: none;
+  }
+
+  .neo-input::placeholder {
+    color: #636E72;
+  }
+
+  .neo-input:focus {
+    border-color: #FF6B6B;
+  }
+
+  .neo-input:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .neo-btn-primary {
+    background-color: #FF6B6B;
+    color: #FFFFFF;
+    border-width: 3px;
+    border-style: solid;
+    border-color: #2D3436;
+    box-shadow: 4px 4px 0 0 #2D3436;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    padding: 0.5rem 1.25rem;
+    cursor: pointer;
+    transition: all 100ms ease-out;
+  }
+
+  .neo-btn-primary:hover {
+    transform: translateX(-1px) translateY(-1px);
+    box-shadow: 5px 5px 0 0 #2D3436;
+  }
+
+  .neo-btn-primary:active {
+    transform: translateX(0) translateY(0);
+    box-shadow: 2px 2px 0 0 #2D3436;
+  }
+
+  .neo-btn-secondary {
+    background-color: #4ECDC4;
+    color: #FFFFFF;
+    border-width: 3px;
+    border-style: solid;
+    border-color: #2D3436;
+    box-shadow: 4px 4px 0 0 #2D3436;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    padding: 0.5rem 1.25rem;
+    cursor: pointer;
+    transition: all 100ms ease-out;
+  }
+
+  .neo-btn-ghost {
+    background-color: transparent;
+    color: #2D3436;
+    border-width: 2px;
+    border-style: solid;
+    border-color: #2D3436;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 100ms;
+  }
+
+  .neo-btn-ghost:hover {
+    background-color: #F7F7F7;
+  }
+
+  .neo-btn-danger {
+    background-color: #FF4757;
+    color: #FFFFFF;
+    border-width: 3px;
+    border-style: solid;
+    border-color: #2D3436;
+    box-shadow: 4px 4px 0 0 #2D3436;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    padding: 0.5rem 1.25rem;
+    cursor: pointer;
+    transition: all 100ms ease-out;
+  }
+}
+
+@layer utilities {
+  .font-heading {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .font-body {
+    font-family: 'Inter', sans-serif;
+  }
+
+  .font-mono-code {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Leaflet fixes */
+.leaflet-container {
+  font-family: 'Inter', sans-serif !important;
+}
+
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
