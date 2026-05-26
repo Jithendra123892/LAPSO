@@ -1,5 +1,5 @@
 import { DeviceCard } from './device-card'
-import { BlobDevice } from './blob-device'
+import { BlobDevice } from '@/components/illustrations/blob-device'
 
 export function DeviceGrid({ devices, onAddClick }: { devices: any[]; onAddClick: () => void }) {
   if (devices.length === 0) {
