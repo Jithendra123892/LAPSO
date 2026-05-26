@@ -44,6 +44,24 @@ export async function POST(req: NextRequest) {
       source: data.source, batteryLevel: data.batteryLevel,
     }).returning()
 
+    // Emit real-time location update via WebSocket
+    if (process.env.NEXT_PUBLIC_SOCKET_URL) {
+      try {
+        const { emitLocationUpdate } = await import('@/lib/socket-server')
+        emitLocationUpdate(data.deviceId, {
+          lat: data.latitude,
+          lng: data.longitude,
+          accuracy: data.accuracy,
+          speed: data.speed,
+          heading: data.heading,
+          source: data.source,
+          recordedAt: new Date().toISOString(),
+        })
+      } catch (e) {
+        // Socket server may not be available in all environments
+      }
+    }
+
     return NextResponse.json({ success: true, locationId: location.id })
   } catch (error) {
     console.error('Location ingest error:', error)
