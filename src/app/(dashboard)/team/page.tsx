@@ -74,7 +74,7 @@ export default function TeamPage() {
     enabled: !!accessToken,
   })
 
-  const inviteMutation = useMutation({
+  const inviteMutation = useMutation<unknown, Error, { email: string; role: string }, unknown>({
     mutationFn: async ({ email, role }: { email: string; role: string }) => {
       const res = await fetch('/api/team/invite', {
         method: 'POST',
@@ -90,10 +90,10 @@ export default function TeamPage() {
       setInviteEmail('')
       showToast('Invitation sent!')
     },
-    onError: () => showToast('Failed to send invitation.', 'error'),
-  } as any)
+    onError: () => showToast('Failed to send invitation.'),
+  })
 
-  const removeMutation = useMutation({
+  const removeMutation = useMutation<unknown, Error, string, unknown>({
     mutationFn: async (memberId: string) => {
       await fetch(`/api/team/members/${memberId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` } })
     },
@@ -101,7 +101,7 @@ export default function TeamPage() {
       qc.invalidateQueries({ queryKey: ['team'] })
       showToast('Member removed')
     },
-  } as any)
+  })
 
   const team = teamData?.team
   const members = teamData?.members || []
@@ -195,7 +195,7 @@ export default function TeamPage() {
                       <MemberRow
                         key={member.id}
                         member={member}
-                        currentUserId={userId}
+                        currentUserId={userId ?? ''}
                         onRemove={(id) => {
                           if (confirm('Remove this member from the team?')) removeMutation.mutate(id)
                         }}

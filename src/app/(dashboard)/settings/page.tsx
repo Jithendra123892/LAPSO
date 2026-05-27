@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAppStore } from '@/store/app-store'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BlobDevice } from '@/components/illustrations/blob-device'
-import { User, Lock, Key, Download, Copy, CheckCircle, Warning, Shield, Trash, Devices, Eye, EyeSlash, ArrowSync } from '@phosphor-icons/react'
+import { User, Lock, Key, Download, Copy, CheckCircle, Warning, Shield, Trash, Devices, Eye, EyeSlash, ArrowsClockwise } from '@phosphor-icons/react'
 
 const containerVariants = {
   hidden: {},
@@ -252,7 +252,7 @@ function SecuritySection({ showToast, user, accessToken }: { showToast: any; use
               <p className="font-body text-xs text-dark-light">Protect your account with an authenticator app.</p>
             </div>
             <button onClick={() => setSetupTotp(true)} className="neo-btn-secondary text-sm flex items-center gap-1">
-              <ArrowSync size={14} weight="bold" /> Set Up 2FA
+              <ArrowsClockwise size={14} weight="bold" /> Set Up 2FA
             </button>
           </div>
         )}
@@ -306,7 +306,7 @@ function KeysSection({ showToast, user, accessToken, showKey, setShowKey, copied
                 {user?.publicKey ? `${user.publicKey.slice(0, 32)}...` : 'No keypair generated'}
               </code>
               {user?.publicKey && (
-                <button onClick={() => copyToClipboard(userpublicKey)} className="neo-btn-ghost p-1.5 shrink-0" title="Copy public key">
+                <button onClick={() => copyToClipboard(user.publicKey)} className="neo-btn-ghost p-1.5 shrink-0" title="Copy public key">
                   {copied ? <CheckCircle size={14} weight="fill" className="text-secondary" /> : <Copy size={14} />}
                 </button>
               )}
@@ -341,7 +341,7 @@ function KeysSection({ showToast, user, accessToken, showKey, setShowKey, copied
               <Download size={14} /> Export Backup
             </motion.button>
             <motion.button whileTap={{ scale: 0.97 }} className="neo-btn-danger flex items-center gap-1.5 text-xs" onClick={regenerateKeys} disabled={generating}>
-              <ArrowSync size={14} /> {generating ? 'Generating...' : 'Regenerate Keypair'}
+              <ArrowsClockwise size={14} /> {generating ? 'Generating...' : 'Regenerate Keypair'}
             </motion.button>
           </div>
         </div>

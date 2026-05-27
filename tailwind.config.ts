@@ -1,17 +1,18 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
+  darkMode: 'class',
   content: ['./src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        primary: { DEFAULT: '#FF6B6B', hover: '#FF5252', light: '#FF8E8E' },
-        secondary: { DEFAULT: '#4ECDC4', hover: '#3DBDB5', light: '#7EDDD6' },
-        accent: { DEFAULT: '#FFE66D', hover: '#FFE033', light: '#FFF0A3' },
-        dark: { DEFAULT: '#2D3436', light: '#636E72' },
-        surface: { DEFAULT: '#FFFFFF', alt: '#F7F7F7' },
+        primary: { DEFAULT: 'var(--color-primary)', hover: 'var(--color-primary-hover)', light: '#FF8E8E' },
+        secondary: { DEFAULT: 'var(--color-secondary)', hover: 'var(--color-secondary-hover)', light: '#7EDDD6' },
+        accent: { DEFAULT: 'var(--color-accent)', hover: '#FFE033', light: '#FFF0A3' },
+        dark: { DEFAULT: 'var(--color-dark)', light: 'var(--color-dark-light)' },
+        surface: { DEFAULT: 'var(--color-surface)', alt: 'var(--color-surface-alt)' },
         danger: { DEFAULT: '#FF4757', hover: '#FF3344' },
-        purple: { DEFAULT: '#A855F7', hover: '#9333EA', light: '#C084FC' },
+        purple: { DEFAULT: 'var(--color-purple)', hover: '#9333EA', light: '#C084FC' },
       },
       fontFamily: {
         heading: ['Space Grotesk', 'sans-serif'],

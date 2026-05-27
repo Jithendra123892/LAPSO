@@ -1,0 +1,26 @@
+{
+  "name": "@lapso/device-agent",
+  "version": "1.0.0",
+  "description": "LAPSO device tracking agent - reports location, health, and receives commands",
+  "main": "dist/index.js",
+  "bin": {
+    "lapso-agent": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.7.5",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/yargs": "^17.0.32",
+    "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

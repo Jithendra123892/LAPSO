@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     const withinGeofences = userGeofences.filter((gf) => {
       const coords = typeof gf.coordinates === 'string' ? JSON.parse(gf.coordinates) : gf.coordinates
       if (!coords?.lat || !coords?.lng) return false
-      const dist = haversine(device.lastLatitude, device.lastLongitude, coords.lat, coords.lng)
+      const dist = haversine(device.lastLatitude!, device.lastLongitude!, coords.lat, coords.lng)
       return dist <= (gf.radius || 0.1) / 1000
     })
     for (const gf of withinGeofences) {

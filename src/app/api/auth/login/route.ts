@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { users } from '@/lib/db/schema'
+import { users, refreshTokens } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { verifyPassword } from '@/lib/auth/password'
 import { signAccessToken, signRefreshToken } from '@/lib/auth/jwt'
@@ -33,6 +33,13 @@ export async function POST(req: NextRequest) {
 
     const accessToken = signAccessToken({ sub: user.id, email: user.email })
     const refreshToken = signRefreshToken({ sub: user.id, email: user.email })
+
+    // Store refresh token in DB
+    await db.insert(refreshTokens).values({
+      userId: user.id,
+      token: refreshToken,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    })
 
     const response = NextResponse.json({
       user: { id: user.id, email: user.email, name: user.name },

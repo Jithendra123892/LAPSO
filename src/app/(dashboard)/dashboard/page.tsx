@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/app-store'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BlobDevice } from '@/components/illustrations/blob-device'
 import { Devices, Plus, X, Laptop, DeviceMobile, Desktop } from '@phosphor-icons/react'
+import { DeviceCard } from '@/components/devices/device-card'
 import dynamic from 'next/dynamic'
 
 const LiveMap = dynamic(() => import('@/components/map/live-map').then(m => m.LiveMap), { ssr: false })
@@ -144,9 +145,12 @@ export default function DashboardPage() {
       ) : devices.length === 0 ? (
         <motion.div variants={itemVariants} initial="hidden" animate="show" className="neo-empty-state">
           <div className="flex justify-center mb-4">
-            <BlobDevice mood="neutral" size={100}>
-              <animateTransform attributeName="transform" type="rotate" from="0 40 40" to="360 40 40" dur="8s" repeatCount="indefinite" />
-            </BlobDevice>
+            <motion.div
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <BlobDevice mood="neutral" size={100} />
+            </motion.div>
           </div>
           <h3 className="font-heading font-bold text-xl text-dark mb-2">No devices yet</h3>
           <p className="font-body text-sm text-dark-light mb-6 max-w-xs mx-auto">
