@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shield, Warning, WarningDiamond, Info, CheckCircle, Trash, Eye, EyeSlash, Bell, BellSlash } from '@phosphor-icons/react'
+import { Shield, Warning, WarningDiamond, Info, CheckCircle, Trash, Eye, EyeSlash } from '@phosphor-icons/react'
+import { timeAgo } from '@/lib/utils'
 import { useGeofenceAlerts } from '@/hooks/use-device-socket'
 
 interface Alert {
@@ -74,7 +75,7 @@ export default function AlertsPage() {
   const unreadCount = alerts.filter((a) => !a.read).length
 
   return (
-    <div className="min-h-screen bg-surface-alt p-6">
+    <div className="min-h-dvh bg-surface-alt p-6">
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -82,6 +83,8 @@ export default function AlertsPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             className="fixed top-4 right-4 z-50 neo-card bg-accent text-dark px-4 py-3 font-body text-sm font-medium shadow-neo flex items-center gap-2"
+            role="status"
+            aria-live="polite"
           >
             <Warning size={16} weight="fill" />
             Geofence alert: {toast.title}
@@ -189,12 +192,4 @@ export default function AlertsPage() {
       </div>
     </div>
   )
-}
-
-function timeAgo(date: string): string {
-  const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
-  if (seconds < 60) return 'just now'
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-  return `${Math.floor(seconds / 86400)}d ago`
 }

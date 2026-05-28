@@ -37,7 +37,7 @@ export default function LandingPage() {
   const y2 = useTransform(scrollYProgress, [0, 1], [0, -160])
 
   return (
-    <div ref={ref} className="min-h-screen bg-surface-alt overflow-x-hidden">
+    <div ref={ref} className="min-h-dvh bg-surface-alt overflow-x-hidden">
       {/* Floating ambient blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <motion.div

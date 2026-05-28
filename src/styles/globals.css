@@ -316,7 +316,7 @@
 
   .blob-bg {
     position: absolute;
-    border-radius: 0;
+    border-radius: 50%;
     opacity: 0.06;
     pointer-events: none;
     animation: blobFloat 8s ease-in-out infinite;
@@ -328,6 +328,49 @@
     66% { transform: translate(-10px, 10px) scale(0.95); }
   }
 
+  /* ── Dashboard ambient blob backgrounds ── */
+  .blob-dashboard {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+    animation: dashboardFloat 8s ease-in-out infinite;
+  }
+
+  .blob-dashboard-primary {
+    background: #FF6B6B;
+    width: 400px;
+    height: 400px;
+    top: -100px;
+    left: -100px;
+  }
+
+  .blob-dashboard-secondary {
+    background: #4ECDC4;
+    width: 350px;
+    height: 350px;
+    bottom: -80px;
+    right: -80px;
+    animation-delay: 2s;
+  }
+
+  .blob-dashboard-accent {
+    background: #FFE66D;
+    width: 280px;
+    height: 280px;
+    top: 40%;
+    left: 45%;
+    animation-delay: 4s;
+  }
+
+  @keyframes dashboardFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.05); }
+  }
+
+  /* ── Scroll-reveal animations ── */
   @keyframes fadeSlideUp {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
@@ -335,6 +378,16 @@
 
   .animate-fade-up {
     animation: fadeSlideUp 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
+  }
+
+  /* ── Radar animation for device location ── */
+  @keyframes radarPulse {
+    0% { transform: scale(0.5); opacity: 0.8; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
+
+  .radar-pulse {
+    animation: radarPulse 2s ease-out infinite;
   }
 
   .animate-press { transition: transform 80ms ease-out; }

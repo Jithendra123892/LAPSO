@@ -109,7 +109,7 @@ export default function TeamPage() {
   const canManage = myRole === 'owner' || myRole === 'admin'
 
   return (
-    <div className="min-h-screen bg-surface-alt p-6">
+    <div className="min-h-dvh bg-surface-alt p-6">
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -117,6 +117,8 @@ export default function TeamPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             className="fixed top-4 right-4 z-50 neo-card bg-secondary text-dark px-4 py-3 font-body text-sm font-semibold shadow-neo flex items-center gap-2"
+            role="status"
+            aria-live="polite"
           >
             <CheckCircle size={16} weight="fill" />
             {toast}

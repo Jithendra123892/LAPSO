@@ -10,7 +10,7 @@ const GeofenceMapPicker = dynamic(
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Crosshair, Plus, Trash, ToggleLeft, ToggleRight, MapPin } from '@phosphor-icons/react'
+import { Crosshair, Plus, Trash, ToggleLeft, ToggleRight, MapPin, ArrowRight, ArrowLeft } from '@phosphor-icons/react'
 import { BlobDevice } from '@/components/illustrations/blob-device'
 
 interface Geofence {
@@ -51,8 +51,16 @@ function GeofenceCard({ geofence, onToggle, onDelete }: {
         <p className="font-mono">{geofence.coordinates.lat.toFixed(4)}, {geofence.coordinates.lng.toFixed(4)}</p>
         <p className="font-heading font-bold">{geofence.radius}m radius</p>
         <div className="flex gap-3 mt-1">
-          {geofence.notifyOnEnter && <span className="text-secondary font-bold text-[11px]">↗ Enter alerts</span>}
-          {geofence.notifyOnExit && <span className="text-primary font-bold text-[11px]">↘ Exit alerts</span>}
+          {geofence.notifyOnEnter && (
+            <span className="text-secondary font-bold text-[11px] flex items-center gap-0.5">
+              <ArrowRight size={12} weight="bold" /> Enter alerts
+            </span>
+          )}
+          {geofence.notifyOnExit && (
+            <span className="text-primary font-bold text-[11px] flex items-center gap-0.5">
+              <ArrowLeft size={12} weight="bold" /> Exit alerts
+            </span>
+          )}
         </div>
       </div>
 
@@ -231,7 +239,7 @@ export default function GeofencesPage() {
   const geofences = data?.geofences || []
 
   return (
-    <div className="min-h-screen bg-surface-alt p-6">
+    <div className="min-h-dvh bg-surface-alt p-6">
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -239,6 +247,8 @@ export default function GeofencesPage() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10 }}
             className="fixed top-4 right-4 z-50 neo-card bg-primary text-white px-4 py-3 font-body text-sm font-bold shadow-neo"
+            role="status"
+            aria-live="polite"
           >
             {toast}
           </motion.div>

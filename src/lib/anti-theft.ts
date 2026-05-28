@@ -40,7 +40,7 @@ export type ThreatType =
   | 'airplane_mode'
   | 'device_wiped'
   | 'unusual_movement'
-  | '陌生的_location'
+  | 'foreign_location'
 
 const THRESHOLDS = {
   maxFailedUnlocks: 3,

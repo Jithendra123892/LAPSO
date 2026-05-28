@@ -57,7 +57,7 @@ export default function WelcomePage() {
   const Icon = current.icon
 
   return (
-    <div className="min-h-screen bg-surface-alt relative overflow-hidden flex items-center justify-center">
+    <div className="min-h-dvh bg-surface-alt relative overflow-hidden flex items-center justify-center">
       {/* Ambient blob backgrounds */}
       <div className="blob-bg w-64 h-64 bg-primary top-10 -left-10" />
       <div className="blob-bg w-48 h-48 bg-secondary bottom-20 right-10" style={{ animationDelay: '2s' }} />

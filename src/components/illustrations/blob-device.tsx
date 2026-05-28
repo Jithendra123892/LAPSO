@@ -15,9 +15,6 @@ interface BlobDeviceProps {
 const moodColors: Record<DeviceMood, string> = {
   happy: '#4ECDC4', worried: '#FFE66D', scared: '#FF6B6B', tired: '#DFE6E9', neutral: '#A855F7',
 }
-const moodEmoji: Record<DeviceMood, string> = {
-  happy: '😊', worried: '😟', scared: '😱', tired: '😴', neutral: '😐',
-}
 
 export function BlobDevice({ mood = 'neutral', type = 'laptop', size = 120, animate = true }: BlobDeviceProps) {
   const color = moodColors[mood]
@@ -56,7 +53,6 @@ export function BlobDevice({ mood = 'neutral', type = 'laptop', size = 120, anim
         animate={mood === 'scared' && animate ? { r: [2.5, 3.2, 2.5] } : {}}
         transition={{ duration: 0.8, repeat: Infinity, delay: 0.1 }}
       />
-      <text x="40" y="65" textAnchor="middle" fontSize="12" fill="#2D3436">{moodEmoji[mood]}</text>
     </motion.svg>
   )
 }

@@ -23,9 +23,3 @@ export function timeAgo(date: Date | string): string {
   return `${Math.floor(seconds / 86400)}d ago`
 }
 
-export function getDeviceEmoji(type: string): string {
-  const map: Record<string, string> = {
-    laptop: '💻', phone: '📱', tablet: '📟', desktop: '🖥️', watch: '⌚',
-  }
-  return map[type] ?? '💻'
-}

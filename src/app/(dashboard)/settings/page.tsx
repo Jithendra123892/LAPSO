@@ -51,7 +51,7 @@ export default function SettingsPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-surface-alt p-6">
+    <div className="min-h-dvh bg-surface-alt p-6">
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -60,6 +60,8 @@ export default function SettingsPage() {
             exit={{ opacity: 0 }}
             className="fixed top-4 left-1/2 z-50 neo-card px-5 py-3 font-body text-sm font-semibold shadow-neo flex items-center gap-2"
             style={{ background: toast.type === 'success' ? '#4ECDC4' : '#FF4757', color: 'white', borderColor: '#2D3436' }}
+            role="status"
+            aria-live="polite"
           >
             {toast.type === 'success' ? <CheckCircle size={16} weight="fill" /> : <Warning size={16} weight="fill" />}
             {toast.msg}

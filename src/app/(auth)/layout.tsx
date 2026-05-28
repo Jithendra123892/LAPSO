@@ -5,7 +5,7 @@ import { BlobDevice } from '@/components/illustrations/blob-device'
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-surface-alt relative overflow-hidden flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-surface-alt relative overflow-hidden flex items-center justify-center p-4">
       {/* Animated blob background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <motion.div
