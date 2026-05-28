@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAppStore } from '@/store/app-store'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BlobDevice } from '@/components/illustrations/blob-device'
-import { User, Lock, Key, Download, Copy, CheckCircle, Warning, Shield, Trash, Devices, Eye, EyeSlash, ArrowsClockwise } from '@phosphor-icons/react'
+import { User, Lock, Key, Download, Copy, CheckCircle, Warning, Shield, Trash, Devices, Eye, EyeSlash, ArrowsClockwise, EyeClosed, MapTrifold } from '@phosphor-icons/react'
 
 const containerVariants = {
   hidden: {},
@@ -32,7 +32,7 @@ export default function SettingsPage() {
   const user = useAppStore((s) => s.user)
   const accessToken = useAppStore((s) => s.accessToken)
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'keys' | 'agents'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'keys' | 'agents' | 'privacy'>('profile')
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const [showKey, setShowKey] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -47,6 +47,7 @@ export default function SettingsPage() {
     { id: 'security' as const, label: 'Security', icon: Lock },
     { id: 'keys' as const, label: 'Encryption', icon: Key },
     { id: 'agents' as const, label: 'Agents', icon: Devices },
+    { id: 'privacy' as const, label: 'Privacy', icon: EyeClosed },
   ]
 
   return (
@@ -100,6 +101,7 @@ export default function SettingsPage() {
           {activeTab === 'profile' && <ProfileSection showToast={showToast} user={user} accessToken={accessToken} qc={qc} />}
           {activeTab === 'security' && <SecuritySection showToast={showToast} user={user} accessToken={accessToken} />}
           {activeTab === 'keys' && <KeysSection showToast={showToast} user={user} accessToken={accessToken} showKey={showKey} setShowKey={setShowKey} copied={copied} setCopied={setCopied} />}
+          {activeTab === 'privacy' && <PrivacySection showToast={showToast} accessToken={accessToken} />}
           {activeTab === 'agents' && <AgentsSection showToast={showToast} accessToken={accessToken} />}
         </motion.div>
       </div>
@@ -350,6 +352,152 @@ function KeysSection({ showToast, user, accessToken, showKey, setShowKey, copied
   )
 }
 
+function PrivacySection({ showToast, accessToken }: { showToast: any; accessToken: any }) {
+  const qc = useQueryClient()
+  const [autoDeleteDays, setAutoDeleteDays] = useState(30)
+  const [newZoneName, setNewZoneName] = useState('')
+  const [newZoneRadius, setNewZoneRadius] = useState(100)
+  const [showNewZoneForm, setShowNewZoneForm] = useState(false)
+
+  const { data: geofencesData } = useQuery({
+    queryKey: ['geofences'],
+    queryFn: async () => {
+      const res = await fetch('/api/geofences', { headers: { Authorization: `Bearer ${accessToken}` } })
+      if (!res.ok) return { geofences: [] }
+      return res.json() as Promise<{ geofences: any[] }>
+    },
+    enabled: !!accessToken,
+  })
+
+  const privacyZones = (geofencesData?.geofences || []).filter((g: any) => g.type === 'privacy')
+
+  const createZoneMutation = useMutation({
+    mutationFn: async () => {
+      if (!newZoneName.trim()) throw new Error('Zone name required')
+      const res = await fetch('/api/geofences', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newZoneName, radius: newZoneRadius, type: 'privacy', enabled: true, coordinates: { lat: 0, lng: 0 } }),
+      })
+      if (!res.ok) throw new Error()
+      return res.json()
+    },
+    onSuccess: () => { showToast('Privacy zone created!'); qc.invalidateQueries({ queryKey: ['geofences'] }); setNewZoneName(''); setShowNewZoneForm(false) },
+    onError: () => showToast('Failed to create zone.', 'error'),
+  })
+
+  const deleteZoneMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/geofences/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` } })
+      if (!res.ok) throw new Error()
+    },
+    onSuccess: () => { showToast('Zone deleted'); qc.invalidateQueries({ queryKey: ['geofences'] }) },
+    onError: () => showToast('Failed to delete zone.', 'error'),
+  })
+
+  const autoDeleteOptions = [
+    { label: '7 days', value: 7 },
+    { label: '30 days', value: 30 },
+    { label: '90 days', value: 90 },
+    { label: 'Never', value: -1 },
+  ]
+
+  return (
+    <motion.div variants={itemVariants} className="space-y-4">
+      <div className="neo-card bg-surface">
+        <SectionHeader icon={EyeClosed} title="Privacy Zones" color="#A855F7" />
+        <div className="neo-card p-4 bg-accent/10 border-l-4 border-accent mb-4">
+          <p className="font-body text-xs text-dark leading-relaxed">
+            <strong>Privacy zones pause tracking</strong> when device enters defined area. Location history not recorded inside zones.
+          </p>
+        </div>
+        {privacyZones.length === 0 && !showNewZoneForm && (
+          <p className="font-body text-sm text-dark-light text-center py-4">No privacy zones defined.</p>
+        )}
+        <div className="space-y-3 mb-4">
+          {privacyZones.map((zone: any) => (
+            <div key={zone.id} className="neo-card p-3 bg-surface-alt flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 border-2 border-dark rounded-none flex items-center justify-center" style={{ backgroundColor: '#A855F7' }}>
+                  <MapTrifold size={14} weight="bold" color="white" />
+                </div>
+                <div>
+                  <p className="font-heading font-bold text-sm">{zone.name}</p>
+                  <p className="font-mono text-xs text-dark-light">{zone.radius}m radius</p>
+                </div>
+              </div>
+              <button onClick={() => deleteZoneMutation.mutate(zone.id)} className="neo-btn-ghost text-danger p-2" title="Delete zone">
+                <Trash size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+        {!showNewZoneForm ? (
+          <button onClick={() => setShowNewZoneForm(true)} className="neo-btn-ghost text-sm w-full">+ Add Zone</button>
+        ) : (
+          <div className="space-y-3 p-4 border-2 border-dashed border-dark/30">
+            <div className="neo-input-row">
+              <label className="neo-label">Zone Name</label>
+              <input className="neo-input w-full" value={newZoneName} onChange={e => setNewZoneName(e.target.value)} placeholder="e.g. Home, Office" />
+            </div>
+            <div className="neo-input-row">
+              <label className="neo-label">Radius (meters)</label>
+              <input type="number" className="neo-input w-full" value={newZoneRadius} onChange={e => setNewZoneRadius(Number(e.target.value))} min={50} max={5000} />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => createZoneMutation.mutate()} disabled={createZoneMutation.isPending || !newZoneName.trim()} className="neo-btn-secondary flex-1 text-xs">
+                {createZoneMutation.isPending ? 'Creating...' : 'Create Zone'}
+              </button>
+              <button onClick={() => setShowNewZoneForm(false)} className="neo-btn-ghost text-xs">Cancel</button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="neo-card bg-surface">
+        <SectionHeader icon={Trash} title="Data Retention" color="#FF6B6B" />
+        <p className="font-body text-xs text-dark-light mb-4">Location history auto-deletes after this period.</p>
+        <div className="flex flex-wrap gap-2">
+          {autoDeleteOptions.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => { setAutoDeleteDays(opt.value); showToast(`Auto-delete: ${opt.label}`) }}
+              className={`px-4 py-2 font-heading font-bold text-xs border-2 border-dark transition-all ${autoDeleteDays === opt.value ? 'bg-primary text-white' : 'bg-surface hover:bg-surface-alt'}`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="neo-card bg-surface">
+        <SectionHeader icon={Download} title="Export Your Data" color="#4ECDC4" />
+        <p className="font-body text-xs text-dark-light mb-4">Download all your data in JSON. Devices, geofences, team, and audit logs.</p>
+        <button
+          className="neo-btn-primary flex items-center gap-2"
+          onClick={async () => {
+            showToast('Preparing export...')
+            const res = await fetch('/api/export', { headers: { Authorization: `Bearer ${accessToken}` } })
+            if (res.ok) {
+              const blob = await res.blob()
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = `lapso-export-${new Date().toISOString().split('T')[0]}.json`
+              a.click()
+              showToast('Export downloaded!')
+            } else {
+              showToast('Export failed.', 'error')
+            }
+          }}
+        >
+          <Download size={16} weight="bold" /> Export All Data
+        </button>
+      </div>
+    </motion.div>
+  )
+}
+
 function AgentsSection({ showToast, accessToken }: { showToast: any; accessToken: any }) {
   const [agentToken, setAgentToken] = useState('')
   const [generating, setGenerating] = useState(false)
@@ -373,10 +521,10 @@ function AgentsSection({ showToast, accessToken }: { showToast: any; accessToken
   }
 
   const PLATFORM_GUIDES = [
-    { platform: 'Windows', icon: '🪟', desc: 'Download the LAPSO Agent v1.0 for Windows. Runs as a background service.', url: '#' },
-    { platform: 'macOS', icon: '🍎', desc: 'Download the LAPSO Agent v1.0 for macOS. Requires System Extensions approval.', url: '#' },
-    { platform: 'Linux', icon: '🐧', desc: 'Install via: curl -fsSL https://lap.so/agent/linux | sh', url: '#' },
-    { platform: 'Android', icon: '🤖', desc: 'Download from Google Play. Grant location and accessibility permissions.', url: '#' },
+    { platform: 'Windows', color: '#00A4EF', desc: 'Download the LAPSO Agent v1.0 for Windows. Service.', url: '#' },
+    { platform: 'macOS', color: '#A2AAAD', desc: 'Download the LAPSO Agent v1.0 for macOS. System Extensions approval needed.', url: '#' },
+    { platform: 'Linux', color: '#FCC624', desc: 'Install via: curl -fsSL https://lap.so/agent/linux | sh', url: '#' },
+    { platform: 'Android', color: '#3DDC84', desc: 'Download from Google Play. Grant location permissions.', url: '#' },
   ]
 
   return (
@@ -385,9 +533,11 @@ function AgentsSection({ showToast, accessToken }: { showToast: any; accessToken
         <SectionHeader icon={Devices} title="Agent Installation" color="#4ECDC4" />
         <p className="font-body text-sm text-dark-light mb-4">Download and install the LAPSO agent on each device you want to track.</p>
         <div className="space-y-3">
-          {PLATFORM_GUIDES.map(({ platform, icon, desc, url }) => (
+          {PLATFORM_GUIDES.map(({ platform, color, desc, url }) => (
             <div key={platform} className="neo-card p-4 bg-surface-alt flex items-center gap-4 cursor-pointer hover:bg-surface transition-colors">
-              <div className="text-3xl w-10 text-center">{icon}</div>
+              <div className="w-10 h-10 rounded-none border-2 border-dark flex items-center justify-center font-heading font-bold text-xs text-white" style={{ backgroundColor: color }}>
+                {platform.slice(0, 2).toUpperCase()}
+              </div>
               <div className="flex-1">
                 <p className="font-heading font-bold text-sm text-dark">{platform}</p>
                 <p className="font-body text-xs text-dark-light">{desc}</p>
