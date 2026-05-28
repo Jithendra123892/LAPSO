@@ -1,4 +1,4 @@
-import { neon } from '@/lib/db'
+import { db } from '@/lib/db'
 import { geofences } from '@/lib/db/schema'
 import { z } from 'zod'
 import { eq, and } from 'drizzle-orm'
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const userGeofences = await neon.select().from(geofences).where(eq(geofences.userId, session.user.id))
+  const userGeofences = await db.select().from(geofences).where(eq(geofences.userId, session.user.id))
   return NextResponse.json({ geofences: userGeofences })
 }
 
@@ -34,15 +34,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const [geofence] = await neon.insert(geofences).values({
+  const [geofence] = await db.insert(geofences).values({
+    id: crypto.randomUUID(),
     userId: session.user.id,
     name: parsed.data.name,
-    coordinates: parsed.data.coordinates,
+    coordinates: JSON.stringify(parsed.data.coordinates),
     radius: parsed.data.radius,
     notifyOnEnter: parsed.data.notifyOnEnter,
     notifyOnExit: parsed.data.notifyOnExit,
     enabled: parsed.data.enabled,
     color: parsed.data.color,
+    createdAt: new Date(),
   }).returning()
 
   return NextResponse.json({ geofence }, { status: 201 })

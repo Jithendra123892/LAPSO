@@ -36,9 +36,11 @@ export async function POST(req: NextRequest) {
 
     // Store refresh token in DB
     await db.insert(refreshTokens).values({
+      id: crypto.randomUUID(),
       userId: user.id,
       token: refreshToken,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(),
     })
 
     const response = NextResponse.json({

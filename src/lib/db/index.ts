@@ -1,10 +1,7 @@
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
+import { drizzle } from 'drizzle-orm/better-sqlite3'
+import Database from 'better-sqlite3'
 import * as schema from './schema'
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://lapso:lapso_dev@localhost:5432/lapso'
-
-const client = postgres(connectionString, { max: 10 })
-export const db = drizzle(client, { schema })
-export const neon = db
+const sqlite = new Database('./lapso.db')
+export const db = drizzle(sqlite, { schema })
 export type Database = typeof db

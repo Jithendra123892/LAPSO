@@ -1,4 +1,4 @@
-import { neon } from '@/lib/db'
+import { db } from '@/lib/db'
 import { beacons } from '@/lib/db/schema'
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const userBeacons = await neon.select().from(beacons).where(eq(beacons.userId, session.user.id))
+  const userBeacons = await db.select().from(beacons).where(eq(beacons.userId, session.user.id))
   return NextResponse.json({ beacons: userBeacons })
 }
 
@@ -31,7 +31,8 @@ export async function POST(req: NextRequest) {
   const parsed = createBeaconSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
 
-  const [beacon] = await neon.insert(beacons).values({
+  const [beacon] = await db.insert(beacons).values({
+    id: crypto.randomUUID(),
     userId: session.user.id,
     name: parsed.data.name,
     uuid: parsed.data.uuid,
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
     minor: parsed.data.minor,
     lat: parsed.data.lat,
     lng: parsed.data.lng,
+    createdAt: new Date(),
   }).returning()
 
   return NextResponse.json({ beacon }, { status: 201 })

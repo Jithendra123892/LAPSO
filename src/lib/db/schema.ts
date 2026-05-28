@@ -1,174 +1,165 @@
-import {
-  pgTable, uuid, varchar, text, timestamp, doublePrecision,
-  boolean, jsonb, pgEnum, integer
-} from 'drizzle-orm/pg-core'
-
-// Enums
-export const deviceStatusEnum = pgEnum('device_status', ['online', 'offline', 'lost', 'locked', 'wiped'])
-export const userRoleEnum = pgEnum('user_role', ['owner', 'admin', 'manager', 'member'])
-export const alertSeverityEnum = pgEnum('alert_severity', ['info', 'warning', 'critical'])
-export const commandTypeEnum = pgEnum('command_type', ['lock', 'unlock', 'wipe', 'alarm', 'message', 'locate'])
-export const locationSourceEnum = pgEnum('location_source', ['gps', 'wifi', 'cell', 'ble'])
+import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
+import { sql } from 'drizzle-orm'
 
 // Users
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  name: varchar('name', { length: 255 }).notNull(),
+export const users = sqliteTable('users', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  name: text('name').notNull(),
   passwordHash: text('password_hash').notNull(),
   publicKey: text('public_key'),
   encryptedPrivateKey: text('encrypted_private_key'),
   keySalt: text('key_salt'),
   totpSecret: text('totp_secret'),
-  totpEnabled: boolean('totp_enabled').default(false),
+  totpEnabled: integer('totp_enabled', { mode: 'boolean' }).default(false),
   avatarUrl: text('avatar_url'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 })
 
 // Refresh Tokens
-export const refreshTokens = pgTable('refresh_tokens', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+export const refreshTokens = sqliteTable('refresh_tokens', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   token: text('token').notNull().unique(),
-  expiresAt: timestamp('expires_at').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 })
 
 // Devices
-export const devices = pgTable('devices', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  name: varchar('name', { length: 255 }).notNull(),
-  deviceType: varchar('device_type', { length: 50 }).notNull(),
-  platform: varchar('platform', { length: 50 }).notNull(),
-  status: deviceStatusEnum('status').default('offline').notNull(),
-  lastLatitude: doublePrecision('last_latitude'),
-  lastLongitude: doublePrecision('last_longitude'),
-  lastAccuracy: doublePrecision('last_accuracy'),
-  lastSeenAt: timestamp('last_seen_at'),
+export const devices = sqliteTable('devices', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  deviceType: text('device_type').notNull(),
+  platform: text('platform').notNull(),
+  status: text('status').default('offline').notNull(),
+  lastLatitude: real('last_latitude'),
+  lastLongitude: real('last_longitude'),
+  lastAccuracy: real('last_accuracy'),
+  lastSeenAt: integer('last_seen_at', { mode: 'timestamp' }),
   batteryLevel: integer('battery_level'),
-  batteryCharging: boolean('battery_charging'),
+  batteryCharging: integer('battery_charging', { mode: 'boolean' }),
   storageUsed: integer('storage_used'),
   storageTotal: integer('storage_total'),
-  ipAddress: varchar('ip_address', { length: 45 }),
-  wifiSsid: varchar('wifi_ssid', { length: 255 }),
-  agentVersion: varchar('agent_version', { length: 20 }),
+  ipAddress: text('ip_address'),
+  wifiSsid: text('wifi_ssid'),
+  agentVersion: text('agent_version'),
   publicKey: text('public_key'),
   encryptedDeviceKey: text('encrypted_device_key'),
-  metadata: jsonb('metadata').default({}),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  metadata: text('metadata').default('{}'), // JSON stored as text
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 })
 
 // Location History
-export const locations = pgTable('locations', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  deviceId: uuid('device_id').references(() => devices.id, { onDelete: 'cascade' }).notNull(),
-  latitude: doublePrecision('latitude').notNull(),
-  longitude: doublePrecision('longitude').notNull(),
-  accuracy: doublePrecision('accuracy'),
-  altitude: doublePrecision('altitude'),
-  speed: doublePrecision('speed'),
-  heading: doublePrecision('heading'),
-  source: locationSourceEnum('source').notNull(),
+export const locations = sqliteTable('locations', {
+  id: text('id').primaryKey(),
+  deviceId: text('device_id').notNull().references(() => devices.id, { onDelete: 'cascade' }),
+  latitude: real('latitude').notNull(),
+  longitude: real('longitude').notNull(),
+  accuracy: real('accuracy'),
+  altitude: real('altitude'),
+  speed: real('speed'),
+  heading: real('heading'),
+  source: text('source').notNull(), // gps | wifi | cell | ble
   batteryLevel: integer('battery_level'),
-  recordedAt: timestamp('recorded_at').defaultNow().notNull(),
+  recordedAt: integer('recorded_at', { mode: 'timestamp' }).notNull(),
 })
 
 // Geofences
-export const geofences = pgTable('geofences', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  name: varchar('name', { length: 255 }).notNull(),
-  coordinates: jsonb('coordinates').notNull(),
-  radius: doublePrecision('radius'),
-  notifyOnEnter: boolean('notify_on_enter').default(true),
-  notifyOnExit: boolean('notify_on_exit').default(true),
-  enabled: boolean('enabled').default(true),
-  color: varchar('color', { length: 7 }).default('#FF6B6B'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const geofences = sqliteTable('geofences', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  coordinates: text('coordinates').notNull(), // JSON: {lat, lng}
+  radius: real('radius'),
+  notifyOnEnter: integer('notify_on_enter', { mode: 'boolean' }).default(true),
+  notifyOnExit: integer('notify_on_exit', { mode: 'boolean' }).default(true),
+  enabled: integer('enabled', { mode: 'boolean' }).default(true),
+  color: text('color').default('#FF6B6B'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 })
 
 // Commands
-export const commands = pgTable('commands', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  deviceId: uuid('device_id').references(() => devices.id, { onDelete: 'cascade' }).notNull(),
-  type: commandTypeEnum('type').notNull(),
-  payload: jsonb('payload').default({}),
-  status: varchar('status', { length: 20 }).default('pending').notNull(),
+export const commands = sqliteTable('commands', {
+  id: text('id').primaryKey(),
+  deviceId: text('device_id').notNull().references(() => devices.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // lock | unlock | wipe | alarm | message | locate
+  payload: text('payload').default('{}'), // JSON stored as text
+  status: text('status').default('pending').notNull(),
   result: text('result'),
-  executedAt: timestamp('executed_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  executedAt: integer('executed_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 })
 
 // Alerts
-export const alerts = pgTable('alerts', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  deviceId: uuid('device_id').references(() => devices.id, { onDelete: 'cascade' }),
-  type: varchar('type', { length: 50 }).notNull(),
-  severity: alertSeverityEnum('severity').default('info').notNull(),
-  title: varchar('title', { length: 255 }).notNull(),
+export const alerts = sqliteTable('alerts', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  deviceId: text('device_id').references(() => devices.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(),
+  severity: text('severity').default('info').notNull(), // info | warning | critical
+  title: text('title').notNull(),
   message: text('message'),
-  metadata: jsonb('metadata').default({}),
-  read: boolean('read').default(false),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  metadata: text('metadata').default('{}'), // JSON stored as text
+  read: integer('read', { mode: 'boolean' }).default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 })
 
 // Evidence
-export const evidence = pgTable('evidence', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  deviceId: uuid('device_id').references(() => devices.id, { onDelete: 'cascade' }).notNull(),
-  alertId: uuid('alert_id').references(() => alerts.id, { onDelete: 'set null' }),
-  type: varchar('type', { length: 20 }).notNull(),
+export const evidence = sqliteTable('evidence', {
+  id: text('id').primaryKey(),
+  deviceId: text('device_id').notNull().references(() => devices.id, { onDelete: 'cascade' }),
+  alertId: text('alert_id').references(() => alerts.id, { onDelete: 'set null' }),
+  type: text('type').notNull(),
   url: text('url').notNull(),
   thumbnailUrl: text('thumbnail_url'),
-  lat: doublePrecision('lat'),
-  lng: doublePrecision('lng'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  lat: real('lat'),
+  lng: real('lng'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 })
 
 // Teams
-export const teams = pgTable('teams', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: varchar('name', { length: 255 }).notNull(),
-  ownerId: uuid('owner_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+export const teams = sqliteTable('teams', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  ownerId: text('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 })
 
 // Team Members
-export const teamMembers = pgTable('team_members', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  teamId: uuid('team_id').references(() => teams.id, { onDelete: 'cascade' }).notNull(),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  role: userRoleEnum('role').default('member').notNull(),
-  joinedAt: timestamp('joined_at').defaultNow().notNull(),
+export const teamMembers = sqliteTable('team_members', {
+  id: text('id').primaryKey(),
+  teamId: text('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  role: text('role').default('member').notNull(), // owner | admin | manager | member
+  joinedAt: integer('joined_at', { mode: 'timestamp' }).notNull(),
 })
 
 // Audit Logs
-export const auditLogs = pgTable('audit_logs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
-  teamId: uuid('team_id').references(() => teams.id, { onDelete: 'set null' }),
-  deviceId: uuid('device_id').references(() => devices.id, { onDelete: 'set null' }),
-  action: varchar('action', { length: 100 }).notNull(),
+export const auditLogs = sqliteTable('audit_logs', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  teamId: text('team_id').references(() => teams.id, { onDelete: 'set null' }),
+  deviceId: text('device_id').references(() => devices.id, { onDelete: 'set null' }),
+  action: text('action').notNull(),
   detail: text('detail'),
-  ipAddress: varchar('ip_address', { length: 45 }),
+  ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 })
 
 // Beacons
-export const beacons = pgTable('beacons', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-  name: varchar('name', { length: 255 }).notNull(),
-  uuid: varchar('uuid', { length: 36 }).notNull().unique(),
+export const beacons = sqliteTable('beacons', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  uuid: text('uuid').notNull().unique(),
   major: integer('major'),
   minor: integer('minor'),
-  lat: doublePrecision('lat'),
-  lng: doublePrecision('lng'),
-  lastSeenAt: timestamp('last_seen_at'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
+  lat: real('lat'),
+  lng: real('lng'),
+  lastSeenAt: integer('last_seen_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 })

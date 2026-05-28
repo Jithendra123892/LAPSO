@@ -31,11 +31,14 @@ export async function POST(req: NextRequest) {
     const { publicKey, privateKey } = generateUserKeyPair()
 
     const [user] = await db.insert(users).values({
+      id: crypto.randomUUID(),
       email,
       name,
       passwordHash,
       publicKey,
       encryptedPrivateKey: privateKey,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }).returning({ id: users.id, email: users.email, name: users.name })
 
     const accessToken = signAccessToken({ sub: user.id, email: user.email })
@@ -43,9 +46,11 @@ export async function POST(req: NextRequest) {
 
     // Store refresh token in DB
     await db.insert(refreshTokens).values({
+      id: crypto.randomUUID(),
       userId: user.id,
       token: refreshToken,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(),
     })
 
     const response = NextResponse.json({

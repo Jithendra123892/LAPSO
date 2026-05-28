@@ -1,4 +1,4 @@
-import { neon } from '@/lib/db'
+import { db } from '@/lib/db'
 import { teamMembers, teams, users } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { getServerSession } from 'next-auth'
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Get user's team
-  const [myMembership] = await neon.select().from(teamMembers).where(eq(teamMembers.userId, session.user.id)).limit(1)
+  const [myMembership] = await db.select().from(teamMembers).where(eq(teamMembers.userId, session.user.id)).limit(1)
   if (!myMembership) return NextResponse.json({ error: 'Not in a team' }, { status: 403 })
 
   const myRole = myMembership.role
@@ -26,20 +26,22 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
 
   // Find user by email
-  const [invitee] = await neon.select().from(users).where(eq(users.email, parsed.data.email)).limit(1)
+  const [invitee] = await db.select().from(users).where(eq(users.email, parsed.data.email)).limit(1)
   if (!invitee) return NextResponse.json({ error: 'No user with that email found' }, { status: 404 })
 
   // Check not already a member
-  const [existing] = await neon.select().from(teamMembers)
+  const [existing] = await db.select().from(teamMembers)
     .where(eq(teamMembers.userId, invitee.id))
     .limit(1)
   if (existing) return NextResponse.json({ error: 'User is already a team member' }, { status: 409 })
 
   const teamId = myMembership.teamId
-  const [member] = await neon.insert(teamMembers).values({
+  const [member] = await db.insert(teamMembers).values({
+    id: crypto.randomUUID(),
     teamId,
     userId: invitee.id,
     role: parsed.data.role,
+    joinedAt: new Date(),
   }).returning()
 
   return NextResponse.json({ member }, { status: 201 })

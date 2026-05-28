@@ -28,9 +28,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }
 
     const [command] = await db.insert(commands).values({
+      id: crypto.randomUUID(),
       deviceId: params.id,
       type: parsed.data.type,
-      payload: parsed.data.payload || {},
+      payload: JSON.stringify(parsed.data.payload || {}),
+      status: 'pending',
+      createdAt: new Date(),
     }).returning()
 
     return NextResponse.json(command, { status: 201 })

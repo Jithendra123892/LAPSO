@@ -2,6 +2,7 @@ import { getIO } from '@/lib/socket-server'
 import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
+import { eq } from 'drizzle-orm'
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -13,10 +14,10 @@ export async function GET(req: NextRequest) {
   const radiusKm = parseFloat(searchParams.get('radius') || '50')
 
   // Get user's geofences
-  const { neon } = await import('@/lib/db')
+  const { db } = await import('@/lib/db')
   const { geofences, devices } = await import('@/lib/db/schema')
 
-  const userGeofences = await neon.select().from(geofences).where(eq(geofences.userId, session.user.id))
+  const userGeofences = await db.select().from(geofences).where(eq(geofences.userId, session.user.id))
 
   const triggeredGeofences = userGeofences.filter((gf) => {
     const coords = typeof gf.coordinates === 'string' ? JSON.parse(gf.coordinates) : gf.coordinates
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Check device geofences too
-  const userDevices = await neon.select().from(devices).where(eq(devices.userId, session.user.id))
+  const userDevices = await db.select().from(devices).where(eq(devices.userId, session.user.id))
   for (const device of userDevices) {
     if (!device.lastLatitude || !device.lastLongitude) continue
     const withinGeofences = userGeofences.filter((gf) => {
@@ -76,5 +77,3 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number): numb
       Math.sin(dLng / 2)
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
-
-import { eq } from 'drizzle-orm'

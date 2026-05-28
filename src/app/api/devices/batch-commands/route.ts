@@ -41,10 +41,12 @@ export async function POST(req: NextRequest) {
 
     // Fan-out commands to all devices in parallel
     const commandRecords = authorizedIds.map(deviceId => ({
+      id: crypto.randomUUID(),
       deviceId,
       type: command as any,
-      payload: payload ?? {},
+      payload: JSON.stringify(payload ?? {}),
       status: 'pending' as const,
+      createdAt: new Date(),
     }))
 
     const results = await Promise.all(

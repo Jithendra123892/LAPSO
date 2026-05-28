@@ -34,8 +34,11 @@ export async function POST(req: NextRequest) {
     }
 
     const [device] = await db.insert(devices).values({
+      id: crypto.randomUUID(),
       ...parsed.data,
       userId: user.sub,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }).returning()
 
     return NextResponse.json(device, { status: 201 })

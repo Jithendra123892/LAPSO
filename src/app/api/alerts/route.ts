@@ -1,4 +1,4 @@
-import { neon } from '@/lib/db'
+import { db } from '@/lib/db'
 import { alerts } from '@/lib/db/schema'
 import { eq, and, desc } from 'drizzle-orm'
 import { getServerSession } from 'next-auth'
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get('limit') || '50')
   const unreadOnly = searchParams.get('unread') === 'true'
 
-  const query = neon.select().from(alerts).where(
+  const query = db.select().from(alerts).where(
     eq(alerts.userId, session.user.id)
   ).orderBy(desc(alerts.createdAt)).limit(limit)
 
@@ -33,15 +33,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
-  const [alert] = await neon.insert(alerts).values({
+  const [alert] = await db.insert(alerts).values({
+    id: crypto.randomUUID(),
     userId: session.user.id,
     deviceId,
     type,
     severity,
     title,
     message,
-    metadata: metadata ?? {},
+    metadata: JSON.stringify(metadata ?? {}),
     read: false,
+    createdAt: new Date(),
   }).returning()
 
   // Emit WebSocket alert if socket available

@@ -1,4 +1,4 @@
-import { neon } from '@/lib/db'
+import { db } from '@/lib/db'
 import { evidence } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { getServerSession } from 'next-auth'
@@ -22,7 +22,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid evidence type' }, { status: 400 })
   }
 
-  const [ev] = await neon.insert(evidence).values({
+  const [ev] = await db.insert(evidence).values({
+    id: crypto.randomUUID(),
     deviceId,
     alertId,
     type,
@@ -30,6 +31,7 @@ export async function POST(req: NextRequest) {
     thumbnailUrl,
     lat,
     lng,
+    createdAt: new Date(),
   }).returning()
 
   return NextResponse.json({ evidence: ev }, { status: 201 })
@@ -48,11 +50,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'deviceId or alertId required' }, { status: 400 })
   }
 
-  let query = neon.select().from(evidence)
+  let query = db.select().from(evidence)
   if (deviceId) {
-    const results = await neon.select().from(evidence).where(eq(evidence.deviceId, deviceId))
+    const results = await db.select().from(evidence).where(eq(evidence.deviceId, deviceId))
     return NextResponse.json({ evidence: results })
   }
-  const results = await neon.select().from(evidence).where(eq(evidence.alertId, alertId!))
+  const results = await db.select().from(evidence).where(eq(evidence.alertId, alertId!))
   return NextResponse.json({ evidence: results })
 }

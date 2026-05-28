@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db, neon } from '@/lib/db'
+import { db } from '@/lib/db'
 import { devices, locations, alerts, geofences } from '@/lib/db/schema'
 import { eq, and, desc } from 'drizzle-orm'
 import { z } from 'zod'
@@ -7,7 +7,7 @@ import { detectThreats } from '@/lib/anti-theft'
 import { emitLocationUpdate } from '@/lib/socket-server'
 
 const locationSchema = z.object({
-  deviceId: z.string().uuid(),
+  deviceId: z.string(),
   latitude: z.number(),
   longitude: z.number(),
   accuracy: z.number().optional(),
@@ -61,14 +61,16 @@ export async function POST(req: NextRequest) {
 
     // Create alert records for detected threats
     for (const threat of threats) {
-      await neon.insert(alerts).values({
+      await db.insert(alerts).values({
+        id: crypto.randomUUID(),
         userId: device.userId,
         deviceId: device.id,
         type: threat.type,
         severity: threat.severity === 'low' ? 'info' : threat.severity === 'medium' ? 'warning' : 'critical',
         title: threat.title,
         message: threat.message,
-        metadata: threat.metadata,
+        metadata: JSON.stringify(threat.metadata || {}),
+        createdAt: new Date(),
       })
 
       // Emit critical alert immediately
@@ -103,9 +105,10 @@ export async function POST(req: NextRequest) {
     await db.update(devices).set(updateData).where(eq(devices.id, data.deviceId))
 
     const [location] = await db.insert(locations).values({
+      id: crypto.randomUUID(),
       deviceId: data.deviceId, latitude: data.latitude, longitude: data.longitude,
       accuracy: data.accuracy, altitude: data.altitude, speed: data.speed, heading: data.heading,
-      source: data.source, batteryLevel: data.batteryLevel,
+      source: data.source, batteryLevel: data.batteryLevel, recordedAt: new Date(),
     }).returning()
 
     // Emit real-time update
@@ -122,7 +125,7 @@ export async function POST(req: NextRequest) {
     } catch {}
 
     // Check geofences
-    const userGeofences = await neon.select().from(geofences).where(eq(geofences.userId, device.userId))
+    const userGeofences = await db.select().from(geofences).where(eq(geofences.userId, device.userId))
     for (const gf of userGeofences) {
       if (!gf.enabled) continue
       const coords = typeof gf.coordinates === 'string' ? JSON.parse(gf.coordinates) : gf.coordinates

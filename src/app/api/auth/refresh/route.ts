@@ -43,9 +43,11 @@ export async function POST(req: NextRequest) {
 
     // Store new refresh token in DB
     await db.insert(refreshTokens).values({
+      id: crypto.randomUUID(),
       userId: payload.sub,
       token: newRefreshToken,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(),
     })
 
     const response = NextResponse.json({ accessToken: newAccessToken })

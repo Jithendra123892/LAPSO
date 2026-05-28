@@ -31,7 +31,7 @@ export function LiveMap({ devices }: { devices: DeviceLocation[] }) {
   const mapRef = useRef<L.Map | null>(null)
 
   return (
-    <div className="border-3 border-dark shadow-neo overflow-hidden" style={{ height: '400px' }}>
+    <div className="relative border-3 border-dark shadow-neo overflow-hidden" style={{ height: '400px' }}>
       <MapContainer
         center={[20.5937, 78.9629]}
         zoom={5}

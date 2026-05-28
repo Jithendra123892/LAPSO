@@ -1,4 +1,4 @@
-import { neon } from '@/lib/db'
+import { db } from '@/lib/db'
 import { geofences } from '@/lib/db/schema'
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const [geofence] = await neon.select().from(geofences).where(
+  const [geofence] = await db.select().from(geofences).where(
     eq(geofences.id, params.id)
   )
 
@@ -41,8 +41,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const [updated] = await neon.update(geofences)
-    .set(parsed.data)
+  const updateData: Record<string, any> = { ...parsed.data }
+  if (parsed.data.coordinates) {
+    updateData.coordinates = JSON.stringify(parsed.data.coordinates)
+  }
+  const [updated] = await db.update(geofences)
+    .set(updateData)
     .where(eq(geofences.id, params.id))
     .returning()
 
@@ -57,7 +61,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const [deleted] = await neon.delete(geofences)
+  const [deleted] = await db.delete(geofences)
     .where(eq(geofences.id, params.id))
     .returning()
 

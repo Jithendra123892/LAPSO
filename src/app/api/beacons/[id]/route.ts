@@ -1,4 +1,4 @@
-import { neon } from '@/lib/db'
+import { db } from '@/lib/db'
 import { beacons } from '@/lib/db/schema'
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
@@ -15,7 +15,7 @@ const updateBeaconSchema = z.object({
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const [beacon] = await neon.select().from(beacons).where(eq(beacons.id, params.id))
+  const [beacon] = await db.select().from(beacons).where(eq(beacons.id, params.id))
   if (!beacon || beacon.userId !== session.user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json({ beacon })
 }
@@ -26,7 +26,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   const body = await req.json()
   const parsed = updateBeaconSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
-  const [updated] = await neon.update(beacons).set(parsed.data).where(eq(beacons.id, params.id)).returning()
+  const [updated] = await db.update(beacons).set(parsed.data).where(eq(beacons.id, params.id)).returning()
   if (!updated || updated.userId !== session.user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json({ beacon: updated })
 }
@@ -34,7 +34,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const [deleted] = await neon.delete(beacons).where(eq(beacons.id, params.id)).returning()
+  const [deleted] = await db.delete(beacons).where(eq(beacons.id, params.id)).returning()
   if (!deleted || deleted.userId !== session.user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json({ success: true })
 }

@@ -1,4 +1,4 @@
-import { neon } from '@/lib/db'
+import { db } from '@/lib/db'
 import { teams, teamMembers, users } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { getServerSession } from 'next-auth'
@@ -10,13 +10,13 @@ export async function GET(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // Get user's team
-  const userTeam = await neon.select().from(teamMembers).where(eq(teamMembers.userId, session.user.id)).limit(1)
+  const userTeam = await db.select().from(teamMembers).where(eq(teamMembers.userId, session.user.id)).limit(1)
   if (!userTeam.length) return NextResponse.json({ team: null, members: [] })
 
   const teamId = userTeam[0].teamId
-  const [team] = await neon.select().from(teams).where(eq(teams.id, teamId))
+  const [team] = await db.select().from(teams).where(eq(teams.id, teamId))
 
-  const members = await neon
+  const members = await db
     .select({
       id: teamMembers.id,
       userId: teamMembers.userId,
