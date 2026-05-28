@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { List, X, Sun, Moon } from '@phosphor-icons/react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { House, Devices, MapPin, Shield, Bell, Users, Gear, SignOut } from '@phosphor-icons/react'
+import { House, Devices, MapPin, Shield, Bell, Users, Gear, SignOut, Broadcast } from '@phosphor-icons/react'
 import { useAppStore } from '@/store/app-store'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/devices', label: 'Devices', icon: Devices },
   { href: '/geofences', label: 'Geofences', icon: MapPin },
   { href: '/find', label: 'Find', icon: Shield },
+  { href: '/beacons', label: 'Beacons', icon: Broadcast },
   { href: '/alerts', label: 'Alerts', icon: Bell },
   { href: '/team', label: 'Team', icon: Users },
   { href: '/settings', label: 'Settings', icon: Gear },
