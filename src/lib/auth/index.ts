@@ -13,7 +13,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: { strategy: 'jwt' },
-  secret: process.env.NEXTAUTH_SECRET ?? (() => { throw new Error('NEXTAUTH_SECRET environment variable must be set') })(),
+  secret: process.env.NEXTAUTH_SECRET ?? crypto.randomUUID(),
 }
 
 export async function getServerSession() {
