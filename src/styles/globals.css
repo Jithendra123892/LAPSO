@@ -332,11 +332,8 @@
   .blob-dashboard {
     position: fixed;
     border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.15;
     pointer-events: none;
     z-index: 0;
-    animation: dashboardFloat 8s ease-in-out infinite;
   }
 
   .blob-dashboard-primary {
@@ -357,17 +354,7 @@
   }
 
   .blob-dashboard-accent {
-    background: #FFE66D;
-    width: 280px;
-    height: 280px;
-    top: 40%;
-    left: 45%;
-    animation-delay: 4s;
-  }
-
-  @keyframes dashboardFloat {
-    0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-20px) scale(1.05); }
+    opacity: 0.1;
   }
 
   /* ── Scroll-reveal animations ── */

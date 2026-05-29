@@ -37,7 +37,7 @@ function BatteryColor({ level }: { level: number | null }) {
 export function DeviceCard({ device }: { device: any }) {
   const mood = statusMood[device.status] || 'neutral'
   const statusBg = statusColor[device.status] || '#636E72'
-  const pbColor = BatteryColor(device.batteryLevel)
+  const pbColor = BatteryColor({ level: device.batteryLevel })
   const isOnline = device.status === 'online'
 
   return (

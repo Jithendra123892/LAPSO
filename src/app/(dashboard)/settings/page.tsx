@@ -523,10 +523,30 @@ function AgentsSection({ showToast, accessToken }: { showToast: any; accessToken
   }
 
   const PLATFORM_GUIDES = [
-    { platform: 'Windows', color: '#00A4EF', desc: 'Download the LAPSO Agent v1.0 for Windows. Service.', url: '#' },
-    { platform: 'macOS', color: '#A2AAAD', desc: 'Download the LAPSO Agent v1.0 for macOS. System Extensions approval needed.', url: '#' },
-    { platform: 'Linux', color: '#FCC624', desc: 'Install via: curl -fsSL https://lap.so/agent/linux | sh', url: '#' },
-    { platform: 'Android', color: '#3DDC84', desc: 'Download from Google Play. Grant location permissions.', url: '#' },
+    {
+      platform: 'Node.js / npm',
+      color: '#8B5CF6',
+      cmd: 'npm install --legacy-peer-deps && npm run build',
+      desc: 'From the LAPSO source — works on Windows, macOS, Linux. Node.js 18+ required.',
+    },
+    {
+      platform: 'Windows',
+      color: '#00A4EF',
+      cmd: 'cd agents\\device-node && npm install && npm run build',
+      desc: 'Install from source. Run: node dist\\index.js -t YOUR_TOKEN',
+    },
+    {
+      platform: 'macOS',
+      color: '#A2AAAD',
+      cmd: 'cd agents/device-node && npm install && npm run build',
+      desc: 'Install from source. Run: node dist/index.js -t YOUR_TOKEN',
+    },
+    {
+      platform: 'Linux',
+      color: '#FCC624',
+      cmd: 'curl -fsSL https://lap.so/agent/linux | sh  # or from source',
+      desc: 'Install from source in agents/device-node/',
+    },
   ]
 
   return (
@@ -535,18 +555,16 @@ function AgentsSection({ showToast, accessToken }: { showToast: any; accessToken
         <SectionHeader icon={Devices} title="Agent Installation" color="#4ECDC4" />
         <p className="font-body text-sm text-dark-light mb-4">Download and install the LAPSO agent on each device you want to track.</p>
         <div className="space-y-3">
-          {PLATFORM_GUIDES.map(({ platform, color, desc, url }) => (
-            <div key={platform} className="neo-card p-4 bg-surface-alt flex items-center gap-4 cursor-pointer hover:bg-surface transition-colors">
-              <div className="w-10 h-10 rounded-none border-2 border-dark flex items-center justify-center font-heading font-bold text-xs text-white" style={{ backgroundColor: color }}>
-                {platform.slice(0, 2).toUpperCase()}
-              </div>
-              <div className="flex-1">
+          {PLATFORM_GUIDES.map(({ platform, color, desc, cmd }) => (
+            <div key={platform} className="neo-card p-4 bg-surface-alt">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-none border-2 border-dark flex items-center justify-center font-heading font-bold text-[10px] text-white" style={{ backgroundColor: color }}>
+                  {platform.slice(0, 2).toUpperCase()}
+                </div>
                 <p className="font-heading font-bold text-sm text-dark">{platform}</p>
-                <p className="font-body text-xs text-dark-light">{desc}</p>
               </div>
-              <div className="text-secondary">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              </div>
+              <code className="block font-mono text-xs bg-dark text-surface px-2 py-1.5 mb-2 overflow-x-auto whitespace-pre">{cmd}</code>
+              <p className="font-body text-xs text-dark-light">{desc}</p>
             </div>
           ))}
         </div>
