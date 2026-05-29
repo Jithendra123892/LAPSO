@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm'
 import { verifyPassword } from '@/lib/auth/password'
 import { signAccessToken, signRefreshToken } from '@/lib/auth/jwt'
 import { z } from 'zod'
+import { rateLimit } from '@/lib/rate-limit'
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -12,6 +13,9 @@ const loginSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const rl = rateLimit(req, 'login')
+  if (rl) return rl
+
   try {
     const body = await req.json()
     const parsed = loginSchema.safeParse(body)
@@ -50,12 +54,11 @@ export async function POST(req: NextRequest) {
 
     response.cookies.set('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: req.nextUrl.protocol === 'https:' || req.headers.get('x-forwarded-proto') === 'https',
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60,
     })
-
     return response
   } catch (error) {
     console.error('Login error:', error)

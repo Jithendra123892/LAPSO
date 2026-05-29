@@ -51,9 +51,11 @@ export async function POST(req: NextRequest) {
     })
 
     const response = NextResponse.json({ accessToken: newAccessToken })
+    const isSecure = req.nextUrl.protocol === 'https:' ||
+      req.headers.get('x-forwarded-proto') === 'https'
     response.cookies.set('refresh_token', newRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isSecure,
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60,

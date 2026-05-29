@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { evidence } from '@/lib/db/schema'
+import { evidence, devices } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -16,6 +16,20 @@ export async function POST(req: NextRequest) {
   if (!deviceId || !type || !url) {
     return NextResponse.json({ error: 'Missing deviceId, type, or url' }, { status: 400 })
   }
+
+  // Validate URL scheme — reject javascript:, data:, etc.
+  try {
+    const parsed = new URL(url)
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return NextResponse.json({ error: 'url must use http or https protocol' }, { status: 400 })
+    }
+  } catch {
+    return NextResponse.json({ error: 'Invalid url' }, { status: 400 })
+  }
+
+  // Validate agent token — must match a device owned by this user
+  const device = await db.select().from(devices).where(eq(devices.id, deviceId)).get()
+  if (!device) return NextResponse.json({ error: 'Device not found' }, { status: 404 })
 
   const validTypes = ['screenshot', 'camera', 'audio', 'location_dump', 'network_log']
   if (!validTypes.includes(type)) {

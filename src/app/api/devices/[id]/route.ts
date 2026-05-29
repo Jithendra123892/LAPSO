@@ -7,9 +7,9 @@ import { and, eq } from 'drizzle-orm'
 async function getDevice(req: NextRequest, deviceId: string) {
   const user = getAuthUser(req)
   if (!user) return null
-  const [device] = await db.select().from(devices)
+  const device = await db.select().from(devices)
     .where(and(eq(devices.id, deviceId), eq(devices.userId, user.sub)))
-    .limit(1)
+    .get()
   return device
 }
 
@@ -25,10 +25,11 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
   try {
     const body = await req.json()
-    const [updated] = await db.update(devices)
+    const updated = await db.update(devices)
       .set({ ...body, updatedAt: new Date() })
       .where(eq(devices.id, params.id))
       .returning()
+      .get()
     return NextResponse.json(updated)
   } catch (error) {
     console.error('Update device error:', error)

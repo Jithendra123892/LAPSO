@@ -6,6 +6,7 @@ import { hashPassword } from '@/lib/auth/password'
 import { signAccessToken, signRefreshToken } from '@/lib/auth/jwt'
 import { generateUserKeyPair } from '@/lib/crypto/e2e'
 import { z } from 'zod'
+import { rateLimit } from '@/lib/rate-limit'
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -14,6 +15,9 @@ const registerSchema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const rl = rateLimit(req, 'register')
+  if (rl) return rl
+
   try {
     const body = await req.json()
     const parsed = registerSchema.safeParse(body)
@@ -60,7 +64,8 @@ export async function POST(req: NextRequest) {
 
     response.cookies.set('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: req.nextUrl.protocol === 'https:' ||
+        req.headers.get('x-forwarded-proto') === 'https',
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60,

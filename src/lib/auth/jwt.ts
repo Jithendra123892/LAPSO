@@ -1,8 +1,9 @@
 import jwt from 'jsonwebtoken'
-import { v4 as uuid } from 'uuid'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production'
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev-refresh-change-in-production'
+const JWT_SECRET = process.env.JWT_SECRET as string
+if (!JWT_SECRET) throw new Error('JWT_SECRET environment variable is required')
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as string
+if (!JWT_REFRESH_SECRET) throw new Error('JWT_REFRESH_SECRET environment variable is required')
 
 export interface TokenPayload {
   sub: string
@@ -10,11 +11,11 @@ export interface TokenPayload {
 }
 
 export function signAccessToken(payload: TokenPayload): string {
-  return jwt.sign({ ...payload, jti: uuid() }, JWT_SECRET, { expiresIn: '15m' })
+  return jwt.sign({ ...payload, jti: crypto.randomUUID() }, JWT_SECRET, { expiresIn: '15m' })
 }
 
 export function signRefreshToken(payload: TokenPayload): string {
-  return jwt.sign({ ...payload, jti: uuid() }, JWT_REFRESH_SECRET, { expiresIn: '7d' })
+  return jwt.sign({ ...payload, jti: crypto.randomUUID() }, JWT_REFRESH_SECRET, { expiresIn: '7d' })
 }
 
 export function verifyAccessToken(token: string): TokenPayload {

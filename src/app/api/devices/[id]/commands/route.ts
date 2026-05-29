@@ -14,9 +14,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const user = getAuthUser(req)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const [device] = await db.select().from(devices)
+  const device = await db.select().from(devices)
     .where(and(eq(devices.id, params.id), eq(devices.userId, user.sub)))
-    .limit(1)
+    .get()
 
   if (!device) return NextResponse.json({ error: 'Device not found' }, { status: 404 })
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: 'Validation failed' }, { status: 400 })
     }
 
-    const [command] = await db.insert(commands).values({
+    const command = await db.insert(commands).values({
       id: crypto.randomUUID(),
       deviceId: params.id,
       type: parsed.data.type,
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       status: 'pending',
       createdAt: new Date(),
     }).returning()
+    .get()
 
     return NextResponse.json(command, { status: 201 })
   } catch (error) {

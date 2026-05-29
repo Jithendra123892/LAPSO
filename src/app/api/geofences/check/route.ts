@@ -4,14 +4,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 import { eq } from 'drizzle-orm'
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { searchParams } = new URL(req.url)
-  const userLat = parseFloat(searchParams.get('lat') || '0')
-  const userLng = parseFloat(searchParams.get('lng') || '0')
-  const radiusKm = parseFloat(searchParams.get('radius') || '50')
+  const body = await req.json()
+  const userLat = parseFloat(body.lat ?? 0)
+  const userLng = parseFloat(body.lng ?? 0)
+  const radiusKm = parseFloat(body.radius ?? 50)
 
   // Get user's geofences
   const { db } = await import('@/lib/db')
