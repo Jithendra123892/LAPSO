@@ -5,7 +5,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { homedir } from 'os'
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID } from 'crypto'
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import { LapsoAgent, log, warn, error } from './agent'
@@ -66,7 +66,7 @@ async function main() {
     .demandOption(['token'])
     .argv
 
-  const deviceId: string = argv['device-id'] || savedConfig?.deviceId || uuidv4()
+  const deviceId: string = argv['device-id'] || savedConfig?.deviceId || randomUUID()
   const serverUrl: string = argv['server-url']
   const token: string = argv['token']
 

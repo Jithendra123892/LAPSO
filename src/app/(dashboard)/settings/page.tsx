@@ -503,6 +503,9 @@ function PrivacySection({ showToast, accessToken }: { showToast: any; accessToke
 function AgentsSection({ showToast, accessToken }: { showToast: any; accessToken: any }) {
   const [agentToken, setAgentToken] = useState('')
   const [generating, setGenerating] = useState(false)
+  const [installMethod, setInstallMethod] = useState<'npx' | 'global' | 'source'>('npx')
+
+  const serverUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
 
   const generateAgentToken = async () => {
     setGenerating(true)
@@ -522,52 +525,82 @@ function AgentsSection({ showToast, accessToken }: { showToast: any; accessToken
     setGenerating(false)
   }
 
-  const PLATFORM_GUIDES = [
-    {
-      platform: 'Node.js / npm',
-      color: '#8B5CF6',
-      cmd: 'npm install --legacy-peer-deps && npm run build',
-      desc: 'From the LAPSO source — works on Windows, macOS, Linux. Node.js 18+ required.',
-    },
-    {
-      platform: 'Windows',
-      color: '#00A4EF',
-      cmd: 'cd agents\\device-node && npm install && npm run build',
-      desc: 'Install from source. Run: node dist\\index.js -t YOUR_TOKEN',
-    },
-    {
-      platform: 'macOS',
-      color: '#A2AAAD',
-      cmd: 'cd agents/device-node && npm install && npm run build',
-      desc: 'Install from source. Run: node dist/index.js -t YOUR_TOKEN',
-    },
-    {
-      platform: 'Linux',
-      color: '#FCC624',
-      cmd: 'curl -fsSL https://lap.so/agent/linux | sh  # or from source',
-      desc: 'Install from source in agents/device-node/',
-    },
+  const INSTALL_METHODS = [
+    { id: 'npx' as const, label: 'npx (Recommended)' },
+    { id: 'global' as const, label: 'Global Install' },
+    { id: 'source' as const, label: 'From Source' },
   ]
+
+  const getInstallCmd = () => {
+    const tokenFlag = agentToken ? ` -t ${agentToken}` : ' -t YOUR_TOKEN'
+    const serverFlag = ` -s ${serverUrl}`
+    switch (installMethod) {
+      case 'npx':
+        return `npx @lapso/device-agent${tokenFlag}${serverFlag}`
+      case 'global':
+        return `npm install -g @lapso/device-agent
+lapso-agent${tokenFlag}${serverFlag}`
+      case 'source':
+        return `git clone https://github.com/lapso/device-agent.git
+cd device-agent && npm install && npm run build
+node dist/index.js${tokenFlag}${serverFlag}`
+    }
+  }
+
+  const copyCmd = () => {
+    navigator.clipboard.writeText(getInstallCmd()).then(() => showToast('Command copied!'))
+  }
 
   return (
     <motion.div variants={itemVariants} className="space-y-4">
       <div className="neo-card bg-surface">
-        <SectionHeader icon={Devices} title="Agent Installation" color="#4ECDC4" />
-        <p className="font-body text-sm text-dark-light mb-4">Download and install the LAPSO agent on each device you want to track.</p>
-        <div className="space-y-3">
-          {PLATFORM_GUIDES.map(({ platform, color, desc, cmd }) => (
-            <div key={platform} className="neo-card p-4 bg-surface-alt">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-8 h-8 rounded-none border-2 border-dark flex items-center justify-center font-heading font-bold text-[10px] text-white" style={{ backgroundColor: color }}>
-                  {platform.slice(0, 2).toUpperCase()}
-                </div>
-                <p className="font-heading font-bold text-sm text-dark">{platform}</p>
-              </div>
-              <code className="block font-mono text-xs bg-dark text-surface px-2 py-1.5 mb-2 overflow-x-auto whitespace-pre">{cmd}</code>
-              <p className="font-body text-xs text-dark-light">{desc}</p>
-            </div>
+        <SectionHeader icon={Devices} title="Install Agent" color="#4ECDC4" />
+        <p className="font-body text-sm text-dark-light mb-4">
+          Run one command on each device to start tracking. Requires Node.js 18+.
+        </p>
+
+        <div className="flex gap-2 mb-4">
+          {INSTALL_METHODS.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setInstallMethod(id)}
+              className={`px-3 py-2 font-heading font-bold text-xs border-2 border-dark transition-all ${
+                installMethod === id ? 'bg-primary text-white' : 'bg-surface-alt text-dark hover:bg-surface'
+              }`}
+            >
+              {label}
+            </button>
           ))}
         </div>
+
+        <div className="relative">
+          <code className="block font-mono text-xs bg-dark text-surface px-3 py-3 pr-20 overflow-x-auto whitespace-pre leading-relaxed">
+            {getInstallCmd()}
+          </code>
+          <button
+            onClick={copyCmd}
+            className="absolute right-2 top-2 neo-btn-ghost bg-dark-light/20 text-surface hover:bg-dark-light/40 p-2"
+            title="Copy command"
+          >
+            <Copy size={14} />
+          </button>
+        </div>
+
+        {installMethod === 'npx' && (
+          <p className="font-body text-xs text-dark-light mt-2">
+            npx downloads and runs the agent in one step. No global install needed.
+          </p>
+        )}
+        {installMethod === 'global' && (
+          <p className="font-body text-xs text-dark-light mt-2">
+            Installs the <code className="font-mono text-xs bg-surface-alt px-1">lapso-agent</code> CLI globally. Useful for systemd/launchd services.
+          </p>
+        )}
+        {installMethod === 'source' && (
+          <p className="font-body text-xs text-dark-light mt-2">
+            Build from source if you want to modify the agent or npx isn&apos;t available.
+          </p>
+        )}
       </div>
 
       <div className="neo-card bg-surface">
@@ -584,7 +617,9 @@ function AgentsSection({ showToast, accessToken }: { showToast: any; accessToken
                 <Copy size={14} />
               </button>
             </div>
-            <p className="font-body text-xs text-dark-light mt-1">Paste this token when installing the LAPSO agent on your device.</p>
+            <p className="font-body text-xs text-dark-light mt-1">
+              Token auto-fills in the install command above. Copy the command and run it on your device.
+            </p>
           </div>
         ) : (
           <motion.button whileTap={{ scale: 0.97 }} className="neo-btn-primary" onClick={generateAgentToken} disabled={generating}>

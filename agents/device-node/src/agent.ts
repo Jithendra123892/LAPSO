@@ -299,4 +299,3 @@ function timestamp(): string {
 }
 
 export { log, warn, error }
-export type { AgentConfig, LocationData, HealthData }
